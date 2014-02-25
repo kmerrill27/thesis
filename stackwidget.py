@@ -1,9 +1,20 @@
 from widgets import *
 
-class StackGraphicsTopBar(QtGui.QWidget):
+class StackWidget(QtGui.QFrame):
 
 	def __init__(self):
-		super(StackGraphicsTopBar, self).__init__()
+		super(StackWidget, self).__init__()
+		self.initUI()
+
+	def initUI(self):
+		self.top_bar = StackTopBar()
+		self.window = StackWindow()
+		frameWrap(self.top_bar, self.window)
+
+class StackTopBar(QtGui.QWidget):
+
+	def __init__(self):
+		super(StackTopBar, self).__init__()
 		self.initUI()
 
 	def initUI(self):
@@ -14,10 +25,10 @@ class StackGraphicsTopBar(QtGui.QWidget):
 		box.addWidget(label)
 		self.setLayout(box)
 
-class StackGraphicsWindow(QtGui.QWidget):
+class StackWindow(QtGui.QWidget):
 
 	def __init__(self, parent=None):
-		super(StackGraphicsWindow, self).__init__()
+		super(StackWindow, self).__init__()
 		self.initUI()
 
 	def initUI(self):

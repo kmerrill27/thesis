@@ -11,20 +11,14 @@ class StackVisualizer(QtGui.QWidget):
 	def initUI(self):
 		grid = QtGui.QGridLayout(self)
 
-		self.stack_bar = StackGraphicsTopBar()
-		self.stack_window = StackGraphicsWindow()
-		self.stack_frame = FrameWrappedWidget(self.stack_bar, self.stack_window)
-
-		self.frame_bar = FrameTopBar()
+		self.stack_widget = StackWidget()
 		self.frame_widget = FrameWidget()
-		self.frame_frame = FrameWrappedWidget(self.frame_bar, self.frame_widget)
-
-		self.source_frame = FrameWidget()
+		self.source_widget = SourceCodeWidget()
 
 		horiz_splitter = QtGui.QSplitter(QtCore.Qt.Horizontal)
-		horiz_splitter.addWidget(self.stack_frame)
-		horiz_splitter.addWidget(self.frame_frame)
-		horiz_splitter.addWidget(self.source_frame)
+		horiz_splitter.addWidget(self.stack_widget)
+		horiz_splitter.addWidget(self.frame_widget)
+		horiz_splitter.addWidget(self.source_widget)
 
 		grid.addWidget(horiz_splitter)
 		self.setLayout(grid)

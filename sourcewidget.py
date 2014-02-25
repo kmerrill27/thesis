@@ -2,11 +2,22 @@ import os
 import platform
 from widgets import *
 
-class SourceCodeWidget(QtGui.QWidget):
+class SourceWidget(QtGui.QWidget):
 
-	def __init__(self, source_code_window):
-		super(SourceCodeWidget, self).__init__()
-		self.main_window = source_code_window
+	def __init__(self):
+		super(SourceWidget, self).__init__()
+		self.initUI()
+
+	def initUI(self):
+		self.window = SourceWindow()
+		self.top_bar = SourceTopBar(self.source_window)
+		frameWrap(self.top_bar, self.window)
+
+class SourceTopBar(QtGui.QWidget):
+
+	def __init__(self, source_window):
+		super(SourceTopBar, self).__init__()
+		self.main_window = source_window
 		self.initUI()
 
 	def initUI(self):
@@ -47,10 +58,10 @@ class SourceCodeWidget(QtGui.QWidget):
 			# Unix
 			return filename.replace(" ", "\ ").replace("'", "\'")
 
-class SourceCodeWindow(QtGui.QListWidget):
+class SourceWindow(QtGui.QListWidget):
 
 	def __init__(self):
-		super(SourceCodeWindow, self).__init__()
+		super(SourceWindow, self).__init__()
 
 	def loadSource(self, filename):
 		self.clear()
