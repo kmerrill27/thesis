@@ -9,7 +9,7 @@ class StackWidget(QtGui.QFrame):
 	def initUI(self):
 		self.top_bar = StackTopBar()
 		self.window = StackWindow()
-		frameWrap(self.top_bar, self.window)
+		frameWrap(self, self.top_bar, self.window)
 
 class StackTopBar(QtGui.QWidget):
 

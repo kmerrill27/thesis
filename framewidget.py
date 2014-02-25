@@ -9,7 +9,7 @@ class FrameWidget(QtGui.QFrame):
 	def initUI(self):
 		self.top_bar = FrameTopBar()
 		self.window = FrameWindow()
-		frameWrap(self.top_bar, self.window)
+		frameWrap(self, self.top_bar, self.window)
 
 class FrameTopBar(QtGui.QWidget):
 

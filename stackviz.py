@@ -13,7 +13,7 @@ class StackVisualizer(QtGui.QWidget):
 
 		self.stack_widget = StackWidget()
 		self.frame_widget = FrameWidget()
-		self.source_widget = SourceCodeWidget()
+		self.source_widget = SourceWidget()
 
 		horiz_splitter = QtGui.QSplitter(QtCore.Qt.Horizontal)
 		horiz_splitter.addWidget(self.stack_widget)

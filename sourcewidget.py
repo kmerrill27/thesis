@@ -2,7 +2,7 @@ import os
 import platform
 from widgets import *
 
-class SourceWidget(QtGui.QWidget):
+class SourceWidget(QtGui.QFrame):
 
 	def __init__(self):
 		super(SourceWidget, self).__init__()
@@ -10,8 +10,8 @@ class SourceWidget(QtGui.QWidget):
 
 	def initUI(self):
 		self.window = SourceWindow()
-		self.top_bar = SourceTopBar(self.source_window)
-		frameWrap(self.top_bar, self.window)
+		self.top_bar = SourceTopBar(self.window)
+		frameWrap(self, self.top_bar, self.window)
 
 class SourceTopBar(QtGui.QWidget):
 
