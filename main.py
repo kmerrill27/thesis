@@ -1,8 +1,6 @@
 import sys
 from stackviz import *
 
-# To run: python ui.py ../fact_rec.c
-
 class StackApp(QtGui.QMainWindow):
 
 	def __init__(self):
