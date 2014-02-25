@@ -1,0 +1,63 @@
+class SourceCodeWidget(QtGui.QFrame):
+
+	def __init__(self):
+		super(SourceCodeWidget, self).__init__()
+		self.initUI()
+
+	def initUI(self):
+		self.window = SourceCodeWindow()
+		self.top_bar = SourceCodeTopBar(self.window)
+
+class SourceCodeTopBar(QtGui.QWidget):
+
+	def __init__(self, source_code_widget):
+		super(SourceCodeTopBar, self).__init__()
+		self.source_code_widget = source_code_widget
+		self.initUI()
+
+	def initUI(self):
+		label = QtGui.QLabel()
+		label.setText("Source Code")
+		self.current_file = QtGui.QLabel()
+		self.current_file.setText("No source file")
+		file_button = QtGui.QPushButton("Load source")
+		file_button.clicked.connect(self.fileButtonClicked)
+
+		box = QtGui.QHBoxLayout()
+		box.addWidget(label)
+		box.addWidget(self.current_file)
+		box.addWidget(file_button)
+		self.setLayout(box)
+
+	def fileButtonClicked(self):
+		filename = QtGui.QFileDialog.getOpenFileName(self, "Select a C program")
+		if filename:
+			self.current_file.setText(filename)
+			self.source_code_widget.load_source(filename)
+		else:
+			self.current_file.setText("No source file")
+			self.source_code_widget.clearSource()
+
+class SourceCodeWindow(QtGui.QListWidget):
+
+	def __init__(self):
+		super(SourceCodeWindow, self).__init__()
+
+	def clearSource(self):
+		self.clear()
+
+	def loadSource(self, filename):
+		with open(filename) as f:
+			source_lines = [line.rstrip('\n') for line in f]
+		self.addItems(source_lines)
+
+	def highlightLine(self, line_num):
+		self.setCurrentRow(line_num)
+
+	# Override to disallow user from selecting line
+	def mousePressEvent(self, event):
+		return
+
+	# Override to disallow user from selecting line
+	def mouseMoveEvent(self, event):
+		return
