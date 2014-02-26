@@ -1,6 +1,6 @@
 import os
 import platform
-from widgets import *
+from helper import *
 
 class SourceWidget(QtGui.QFrame):
 

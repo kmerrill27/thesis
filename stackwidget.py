@@ -1,15 +1,25 @@
-from widgets import *
+from helper import *
+from stackframe import *
 
 class StackWidget(QtGui.QFrame):
 
 	def __init__(self):
 		super(StackWidget, self).__init__()
+		self.stack = []
 		self.initUI()
 
 	def initUI(self):
 		self.top_bar = StackTopBar()
 		self.window = StackWindow()
 		frameWrap(self, self.top_bar, self.window)
+
+	def addFrame(self, frame):
+		self.window.addFrame(frame.title)
+		self.stack.append(frame)
+
+	def removeFrame(self):
+		frame = self.window.removeFrame()
+		self.stack.pop()
 
 class StackTopBar(QtGui.QWidget):
 
@@ -39,9 +49,6 @@ class StackWindow(QtGui.QWidget):
 
 		self.button_group = QtGui.QButtonGroup()
 
-		for i in range(0, 5):
-			self.addFrame("Frame " + str(i))
-
 	def addFrame(self, label):
 		frame = QtGui.QPushButton(label)
 		frame.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
@@ -51,3 +58,14 @@ class StackWindow(QtGui.QWidget):
 		self.button_group.addButton(frame)
 
 		self.stack.insertWidget(0, frame, 2)
+
+	def removeFrame(self):
+		if (self.stack.count() > 0):
+			frame = self.stack.itemAt(0).widget()
+			frame.hide()
+			self.stack.removeWidget(frame)
+			self.button_group.removeButton(frame)
+
+			if (self.stack.count() > 0 and self.button_group.checkedButton == 0):
+				self.stack.itemAt(0).widget().setChecked(True)
+

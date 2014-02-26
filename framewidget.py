@@ -1,4 +1,5 @@
-from widgets import *
+from helper import *
+from stackframe import *
 
 class FrameWidget(QtGui.QFrame):
 
@@ -32,4 +33,6 @@ class FrameWindow(QtGui.QWidget):
 		self.initUI()
 
 	def initUI(self):
-		return
+		self.stack = QtGui.QVBoxLayout()
+		self.stack.addStretch()
+		self.setLayout(self.stack)
