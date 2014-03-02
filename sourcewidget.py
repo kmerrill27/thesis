@@ -11,7 +11,7 @@ class SourceWidget(QtGui.QFrame):
 	def initUI(self):
 		self.window = SourceWindow()
 		self.top_bar = SourceTopBar(self.window)
-		frameWrap(self, self.top_bar, self.window)
+		frameWrapVert(self, self.top_bar, self.window)
 
 class SourceTopBar(QtGui.QWidget):
 

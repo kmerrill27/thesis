@@ -1,25 +1,4 @@
 from helper import *
-from stackframe import *
-
-class StackWidget(QtGui.QFrame):
-
-	def __init__(self):
-		super(StackWidget, self).__init__()
-		self.stack = []
-		self.initUI()
-
-	def initUI(self):
-		self.top_bar = StackTopBar()
-		self.window = StackWindow()
-		frameWrap(self, self.top_bar, self.window)
-
-	def addFrame(self, frame):
-		self.window.addFrame(frame.title)
-		self.stack.append(frame)
-
-	def removeFrame(self):
-		frame = self.window.removeFrame()
-		self.stack.pop()
 
 class StackTopBar(QtGui.QWidget):
 
@@ -37,35 +16,61 @@ class StackTopBar(QtGui.QWidget):
 
 class StackWindow(QtGui.QWidget):
 
-	def __init__(self, parent=None):
+	def __init__(self, frame_widget):
 		super(StackWindow, self).__init__()
+		self.frame_widget = frame_widget
+		self.stack = []
 		self.initUI()
 
 	def initUI(self):
-		self.stack = QtGui.QVBoxLayout()
-		self.stack.addStretch()
-		self.stack.setSpacing(2)
-		self.setLayout(self.stack)
+		self.stack_box = QtGui.QVBoxLayout()
+		# This adds 1 to the count of stack_box
+		self.stack_box.addStretch()
+		self.stack_box.setSpacing(2)
+		self.setLayout(self.stack_box)
 
 		self.button_group = QtGui.QButtonGroup()
+		self.button_group.buttonClicked.connect(self.frameSelected)
 
-	def addFrame(self, label):
-		frame = QtGui.QPushButton(label)
-		frame.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
-		frame.setCheckable(True)
-		frame.setChecked(True)
+	def frameSelected(self):
+		frame_index = self.stack_box.indexOf(self.button_group.checkedButton())
+		frame_index = len(self.stack) - frame_index - 1
+		self.frame_widget.displayFrame(self.stack[frame_index])
 
-		self.button_group.addButton(frame)
+	def clear(self):
+		for button in self.button_group.buttons():
+			self.removeButton(button)
+		self.stack = []
 
-		self.stack.insertWidget(0, frame, 2)
+	def addFrame(self, frame):
+		frame_button = QtGui.QPushButton(frame.title)
+		frame_button.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+		frame_button.setCheckable(True)
+		frame_button.setChecked(True)
+
+		self.button_group.addButton(frame_button)
+
+		self.stack_box.insertWidget(0, frame_button, 2)
+
+		self.stack.append(frame)
 
 	def removeFrame(self):
-		if (self.stack.count() > 0):
-			frame = self.stack.itemAt(0).widget()
-			frame.hide()
-			self.stack.removeWidget(frame)
-			self.button_group.removeButton(frame)
+		assert len(self.stack) == self.stack_box.count()-1
 
-			if (self.stack.count() > 0 and self.button_group.checkedButton == 0):
-				self.stack.itemAt(0).widget().setChecked(True)
+		if len(self.stack) > 0:
+			# Top frame was the active frame
+			was_checked = self.removeButton(self.stack_box.itemAt(0).widget())
+			self.stack.pop()
 
+			# If active frame was the one removed, make top frame active frame
+			if len(self.stack) > 0 and was_checked:
+				self.stack_box.itemAt(0).widget().setChecked(True)
+				self.frameSelected()
+
+	def removeButton(self, button):
+		was_checked = button == self.button_group.checkedButton()
+		self.stack_box.removeWidget(button)
+		self.button_group.removeButton(button)
+		button.close()
+
+		return was_checked

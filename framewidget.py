@@ -10,7 +10,13 @@ class FrameWidget(QtGui.QFrame):
 	def initUI(self):
 		self.top_bar = FrameTopBar()
 		self.window = FrameWindow()
-		frameWrap(self, self.top_bar, self.window)
+		frameWrapVert(self, self.top_bar, self.window)
+
+	def clear(self):
+		self.window.clear()
+
+	def displayFrame(self, frame):
+		self.window.displayFrame(frame)
 
 class FrameTopBar(QtGui.QWidget):
 
@@ -31,8 +37,30 @@ class FrameWindow(QtGui.QWidget):
 	def __init__(self):
 		super(FrameWindow, self).__init__()
 		self.initUI()
+		self.current_frame = None
+		self.frame_display = None
 
 	def initUI(self):
-		self.stack = QtGui.QVBoxLayout()
-		self.stack.addStretch()
-		self.setLayout(self.stack)
+		self.frame = QtGui.QVBoxLayout()
+		self.frame.addStretch()
+		self.setLayout(self.frame)
+
+	def displayFrame(self, frame):
+		if frame != self.current_frame:
+			if self.frame_display != None:
+				self.frame_display.hide()
+				self.frame.removeWidget(self.frame_display)
+				self.frame_display.deleteLater()
+
+			self.current_frame = frame
+			self.frame_display = FrameDisplay(frame)
+			self.frame.addWidget(self.frame_display)
+
+	def clear(self):
+		self.current_frame = None
+		self.frame_display = None
+
+		for i in range (0, self.frame.count()):
+			self.frame.itemAt(i).widget().close()
+			self.frame.takeAt(i)
+
