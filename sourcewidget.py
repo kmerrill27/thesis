@@ -1,17 +1,20 @@
 import os
+import subprocess
 import platform
+from stackandframewidget import *
 from helper import *
 
 class SourceWidget(QtGui.QFrame):
 
-	def __init__(self):
+	def __init__(self, stack_and_frame_widget):
 		super(SourceWidget, self).__init__()
+		self.stack_and_frame_widget = stack_and_frame_widget
 		self.initUI()
 
 	def initUI(self):
-		self.window = SourceWindow()
+		self.window = SourceWindow(self.stack_and_frame_widget)
 		self.top_bar = SourceTopBar(self.window)
-		frameWrapVert(self, self.top_bar, self.window)
+		frameWrapVert(self, [self.top_bar, self.window])
 
 class SourceTopBar(QtGui.QWidget):
 
@@ -48,7 +51,7 @@ class SourceTopBar(QtGui.QWidget):
 	def prepareVis(self, filename):
 		os.system("gcc -g " + self.formatPath(filename) + " -o stackviz")
 
-		#os.system('gdb stackviz')
+		#os.system("gdb -q -x test.py")
 		#self.source_code_widget.highlightLine(0)
 
 	def formatPath(self, filename):
@@ -60,11 +63,13 @@ class SourceTopBar(QtGui.QWidget):
 
 class SourceWindow(QtGui.QListWidget):
 
-	def __init__(self):
+	def __init__(self, stack_and_frame_widget):
 		super(SourceWindow, self).__init__()
+		self.stack_and_frame_widget = stack_and_frame_widget
 
 	def loadSource(self, filename):
 		self.clear()
+		self.stack_and_frame_widget.clear()
 
 		if (self.isCSource(filename)):
 			with open(filename) as f:

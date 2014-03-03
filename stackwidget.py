@@ -38,8 +38,13 @@ class StackWindow(QtGui.QWidget):
 		self.frame_widget.displayFrame(self.stack[frame_index])
 
 	def clear(self):
+		self.frame_widget.clear()
 		for button in self.button_group.buttons():
 			self.removeButton(button)
+		# First item is stretch - do not remove
+		for i in range (1, self.stack_box.count()):
+			self.stack_box.itemAt(i).widget().close()
+			self.stack_box.takeAt(i)
 		self.stack = []
 
 	def addFrame(self, frame):

@@ -10,7 +10,7 @@ class FrameWidget(QtGui.QFrame):
 	def initUI(self):
 		self.top_bar = FrameTopBar()
 		self.window = FrameWindow()
-		frameWrapVert(self, self.top_bar, self.window)
+		frameWrapVert(self, [self.top_bar, self.window])
 
 	def clear(self):
 		self.window.clear()
@@ -60,7 +60,8 @@ class FrameWindow(QtGui.QWidget):
 		self.current_frame = None
 		self.frame_display = None
 
-		for i in range (0, self.frame.count()):
+		# First item is stretch - do not remove
+		for i in range (1, self.frame.count()):
 			self.frame.itemAt(i).widget().close()
 			self.frame.takeAt(i)
 

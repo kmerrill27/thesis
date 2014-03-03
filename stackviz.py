@@ -11,13 +11,16 @@ class StackVisualizer(QtGui.QWidget):
 		grid = QtGui.QGridLayout(self)
 
 		self.stack_and_frame_widget = StackAndFrameWidget()
-		self.source_widget = SourceWidget()
+		self.source_widget = SourceWidget(self.stack_and_frame_widget)
 		self.toolbar = QtGui.QToolBar()
 		self.setupToolbar()
 
 		# Testing
 		for i in range(0, 10):
-			frame = StackFrame("Frame " + str(i))
+			frame = StackFrame("Frame " + str(i), "0x0214321432", "0x243214123")
+			frame.addItem(FrameItem("Callee Registers", "0x034039283", 4))
+			frame.addItem(FrameItem("Return value", "0x034039283", 4))
+			frame.addItem(FrameItem("Local vars", "0x034039283", 4))
 			self.stack_and_frame_widget.addFrame(frame)
 		self.stack_and_frame_widget.removeFrame()
 
@@ -31,6 +34,7 @@ class StackVisualizer(QtGui.QWidget):
 
 	def setupToolbar(self):
 		# On Mac OS X, Ctrl corresponds to Command key
+		self.addSpacer()
 		self.setupAction("Line step", "arrow.png", "Right", self.lineStep)
 		self.setupAction("Function step", "arrow.png", "Ctrl+Right", self.functionStep)
 		self.setupAction("Run", "arrow.png", "Space", self.run)
@@ -41,7 +45,16 @@ class StackVisualizer(QtGui.QWidget):
 		action.setShortcut(QtGui.QKeySequence(shortcut))
 		action.setStatusTip(name)
 		action.triggered.connect(handler)
+		label = QtGui.QLabel()
+		label.setText(name)
 		self.toolbar.addAction(action)
+		self.toolbar.addWidget(label)
+		self.addSpacer()
+
+	def addSpacer(self):
+		spacer = QtGui.QWidget()
+		spacer.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+		self.toolbar.addWidget(spacer)
 
 	def lineStep(self):
 		print "line"
