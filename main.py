@@ -11,7 +11,7 @@ class StackApp(QtGui.QMainWindow):
 	def initUI(self):
 		stack_viz = StackVisualizer()
 		self.setCentralWidget(stack_viz)
-		self.resize(1000, 500)
+		self.resize(1000, 600)
 
 		self.setWindowTitle('Stack Viz')
 		self.setWindowIcon(QtGui.QIcon('stack.png'))

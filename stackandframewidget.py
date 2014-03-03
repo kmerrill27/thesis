@@ -16,7 +16,7 @@ class StackAndFrameWidget(QtGui.QFrame):
 		self.stack_widget_frame = QtGui.QFrame()
 
 		frameWrapVert(self.stack_widget_frame, [self.top_bar, self.stack_widget])
-		frameWrapHoriz(self, [self.stack_widget_frame, self.frame_widget])
+		wrapHoriz(self, [self.stack_widget_frame, self.frame_widget])
 
 	def addFrame(self, frame):
 		self.stack_widget.addFrame(frame)

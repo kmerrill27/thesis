@@ -1,4 +1,4 @@
-from sourcewidget import *
+from sourceandassemblywidget import *
 from stackandframewidget import *
 
 class StackVisualizer(QtGui.QWidget):
@@ -11,7 +11,7 @@ class StackVisualizer(QtGui.QWidget):
 		grid = QtGui.QGridLayout(self)
 
 		self.stack_and_frame_widget = StackAndFrameWidget()
-		self.source_widget = SourceWidget(self.stack_and_frame_widget)
+		self.source_and_assembly_widget = SourceAndAssemblyWidget(self.stack_and_frame_widget)
 		self.toolbar = QtGui.QToolBar()
 		self.setupToolbar()
 
@@ -24,11 +24,7 @@ class StackVisualizer(QtGui.QWidget):
 			self.stack_and_frame_widget.addFrame(frame)
 		self.stack_and_frame_widget.removeFrame()
 
-		horiz_splitter = QtGui.QSplitter(QtCore.Qt.Horizontal)
-		horiz_splitter.addWidget(self.stack_and_frame_widget)
-		horiz_splitter.addWidget(self.source_widget)
-
-		grid.addWidget(horiz_splitter)
+		splitterWrapHoriz(grid, [self.stack_and_frame_widget, self.source_and_assembly_widget])
 		grid.addWidget(self.toolbar)
 		self.setLayout(grid)
 
