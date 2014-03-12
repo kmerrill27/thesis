@@ -1,5 +1,6 @@
 from sourceandassemblywidget import *
 from stackandframewidget import *
+from defs import *
 
 class StackVisualizer(QtGui.QWidget):
 
@@ -31,10 +32,10 @@ class StackVisualizer(QtGui.QWidget):
 	def setupToolbar(self):
 		# On Mac OS X, Ctrl corresponds to Command key
 		self.addSpacer()
-		self.setupAction("Line step", "arrow.png", "Right", self.lineStep)
-		self.setupAction("Function step", "arrow.png", "Ctrl+Right", self.functionStep)
-		self.setupAction("Run", "arrow.png", "Space", self.run)
-		self.setupAction("Reset", "arrow.png", "Ctrl+Left", self.reset)
+		self.setupAction("Line step", ARROW_ICON, "Right", self.lineStep)
+		self.setupAction("Function step", ARROW_ICON, "Ctrl+Right", self.functionStep)
+		self.setupAction("Run", ARROW_ICON, "Space", self.run)
+		self.setupAction("Reset", ARROW_ICON, "Ctrl+Left", self.reset)
 
 	def setupAction(self, name, icon, shortcut, handler):
 		action = QtGui.QAction(QtGui.QIcon(icon), name, self)

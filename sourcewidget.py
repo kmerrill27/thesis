@@ -1,6 +1,9 @@
 import os
 import subprocess
 import platform
+from defs import *
+from gdbstream import *
+from parse import *
 from stackandframewidget import *
 from helper import *
 
@@ -21,7 +24,7 @@ class SourceTopBar(QtGui.QWidget):
 
 	def __init__(self, source_window):
 		super(SourceTopBar, self).__init__()
-		self.main_window = source_window
+		self.source_window = source_window
 		self.initUI()
 
 	def initUI(self):
@@ -44,16 +47,17 @@ class SourceTopBar(QtGui.QWidget):
 		filename = QtGui.QFileDialog.getOpenFileName(self, "Select a C program")
 		if filename:
 			self.current_file.setText(os.path.basename(str(filename)))
-			err = self.main_window.loadSource(str(filename))
+			err = self.source_window.loadSource(str(filename))
 
 			if (err > 0):
 				self.prepareVis(str(filename))
 
 	def prepareVis(self, filename):
-		os.system("gcc -g " + self.formatPath(filename) + " -o stackviz")
+		print C_COMPILE.format(self.formatPath(filename), C_OUT)
+		os.system(C_COMPILE.format(self.formatPath(filename), C_OUT))
 
 		#os.system("gdb -q -x test.py")
-		#self.source_code_widget.highlightLine(0)
+		self.source_window.highlightLine(23)
 
 	def formatPath(self, filename):
 		if (platform.system() == "Windows"):
@@ -80,24 +84,13 @@ class SourceWindow(QtGui.QListWidget):
 			self.addItems(source_lines)
 			return 1
 		else:
-			self.addItem("ERROR: not a C source file")
+			self.addItem(NOT_C_SOURCE)
 			return -1
 
 	def highlightLine(self, line_num):
 		self.setCurrentRow(line_num)
-		# TODO: load assembly lines
-		lines = ["0x0000000100000e88 <+152>:	mov    -0x20(%rbp),%eax",
-   				 "0x0000000100000e8b <+155>:	add    $0x1,%eax",
-   				 "0x0000000100000e8e <+158>:	mov    -0x8(%rbp),%rcx",
-   				 "0x0000000100000e92 <+162>:	mov    -0x10(%rbp),%edx",
-   	  			 "0x0000000100000e95 <+165>:	mov    -0x14(%rbp),%esi",
-   				 "0x0000000100000e98 <+168>:	mov    %rcx,%rdi",
-   				 "0x0000000100000e9b <+171>:	mov    %esi,-0x28(%rbp)",
-   				 "0x0000000100000e9e <+174>:	mov    %eax,%esi",
-   				 "0x0000000100000ea0 <+176>:	mov    -0x28(%rbp),%ecx",
-   				 "0x0000000100000ea3 <+179>:	callq  0x100000df0 <bin_search>",
-   			     "0x0000000100000ea8 <+184>:	mov    %eax,%ecx",
-   				 "0x0000000100000eaa <+186>:	mov    %ecx,-0x1c(%rbp)"]
+		disas(line_num)
+		lines = parse_disas()
 		self.assembly_widget.displayLines(lines)
 
 	def isCSource(self, filename):

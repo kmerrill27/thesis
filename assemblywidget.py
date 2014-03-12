@@ -1,4 +1,5 @@
 from PyQt4 import QtGui
+from PyQt4 import QtCore
 from helper import *
 
 class AssemblyWidget(QtGui.QFrame):
@@ -39,7 +40,6 @@ class AssemblyWindow(QtGui.QListWidget):
 
 	def displayLines(self, lines):
 		self.clear()
-		lines = [line.rstrip('\n') for line in lines]
 		self.addItems(lines)
 
 	def highlightLine(self, line_num):

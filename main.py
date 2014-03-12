@@ -1,4 +1,5 @@
 import sys
+from defs import *
 from stackviz import *
 
 class StackApp(QtGui.QMainWindow):
@@ -13,8 +14,8 @@ class StackApp(QtGui.QMainWindow):
 		self.setCentralWidget(stack_viz)
 		self.resize(1000, 600)
 
-		self.setWindowTitle('Stack Viz')
-		self.setWindowIcon(QtGui.QIcon('stack.png'))
+		self.setWindowTitle(TITLE)
+		self.setWindowIcon(QtGui.QIcon(STACK_ICON))
 
 def main():
 	app = QtGui.QApplication(sys.argv)
