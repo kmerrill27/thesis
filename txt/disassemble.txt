@@ -1,0 +1,5 @@
+
+Breakpoint 1, factorial (n=1) at fact_rec.c:24
+24	 		return 1;
+=> 0x0000000100000ebb <factorial+27>:	c7 45 f4 01 00 00 00	movl   $0x1,-0xc(%rbp)
+   0x0000000100000ec2 <factorial+34>:	eb 18	jmp    0x100000edc <factorial+60>
