@@ -1,3 +1,4 @@
+Starting program: /Users/kmerrill27/Documents/Spring 2014/Senior Project/code/python_src/stackviz 
 
 Breakpoint 1, factorial (n=1) at fact_rec.c:24
 24	 		return 1;

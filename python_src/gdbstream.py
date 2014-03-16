@@ -14,6 +14,3 @@ def disas(src_line):
 
 	# Run script against GDB to collect assembly code for line
 	os.system(RUN_SCRIPT.format(SCRIPT_FILE, C_OUT))
-
-def info_stack():
-	return 0

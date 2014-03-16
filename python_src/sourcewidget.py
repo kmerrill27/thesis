@@ -1,10 +1,10 @@
-import pexpect
 import platform
 from defs import *
 from gdbstream import *
 from parse import *
 from stackandframewidget import *
 from helper import *
+from runstate import *
 
 class SourceWidget(QtGui.QFrame):
 
@@ -54,13 +54,7 @@ class SourceTopBar(QtGui.QWidget):
 	def prepareVis(self, filename):
 		command = C_COMPILE.format(self.formatPath(filename), C_OUT)
 
-		child = pexpect.spawn(command)
-		child.expect(".*")
-		if (child.isalive()):
-			print "TEST"
-			child.sendline("ls")
-			child.expect(".*")
-			print child.after
+		gdb_init()
 
 		#os.system(C_COMPILE.format(self.formatPath(filename), C_OUT))
 		#os.system("gdb -q -x test.py")
