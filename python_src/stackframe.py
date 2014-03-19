@@ -17,10 +17,15 @@ class StackFrame:
 
 class FrameItem:
 
-	def __init__(self, title, value, size):
+	def __init__(self, title, addr):
 		self.title = title
+		self.addr = addr
+		self.value = None
+
+	def __init__(self, title, addr, value):
+		self.title = title
+		self.addr = addr
 		self.value = value
-		self.size = size
 
 class FrameDisplay(QtGui.QFrame):
 

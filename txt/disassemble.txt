@@ -1,6 +1,5 @@
-Starting program: /Users/kmerrill27/Documents/Spring 2014/Senior Project/code/python_src/stackviz 
 
-Breakpoint 1, factorial (n=1) at fact_rec.c:24
-24	 		return 1;
-=> 0x0000000100000ebb <factorial+27>:	c7 45 f4 01 00 00 00	movl   $0x1,-0xc(%rbp)
-   0x0000000100000ec2 <factorial+34>:	eb 18	jmp    0x100000edc <factorial+60>
+Breakpoint 1, main () at fact_rec.c:13
+13	 	int n = 5;
+=> 0x0000000100000e44 <main+4>:	48 83 ec 20	sub    $0x20,%rsp
+   0x0000000100000e48 <main+8>:	c7 45 f4 05 00 00 00	movl   $0x5,-0xc(%rbp)

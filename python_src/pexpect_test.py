@@ -68,6 +68,8 @@ print "before: /", g.before, "/"
 print "after: /", g.after, "/"
 print 'is alive: ', g.isalive()
 
+g.sendline("set confirm off")
+g.expect("(gdb)")
 g.sendline("set disassemble-next-line on")
 g.expect("(gdb)")
 print "1"
@@ -80,7 +82,7 @@ print "3"
 g.sendline("set logging file ../txt/disassemble.txt")
 g.expect("(gdb)")
 print "4"
-g.sendline("break 23")
+g.sendline("rbreak .")
 g.expect("Breakpoint")
 print "5"
 g.sendline("set logging on")
@@ -89,16 +91,42 @@ print "6"
 g.sendline("run")
 g.expect("(gdb)")
 print "7"
-g.sendline("set logging off")
-g.expect("Done logging to ../txt/disassemble.txt.")
+g.sendline("del")
+g.expect("(gdb)")
+g.sendline("continue")
+g.expect("(gdb)")
 print "8"
-g.sendline("q")
-g.expect("Quit anyway?")
-print "9"
-g.sendline("y")
-g.expect("\$")
 print "before: /", g.before, "/"
 print "after: /", g.after, "/"
+#g.sendline("q")
+#g.expect("\$")
+print "before: /", g.before, "/"
+print "after: /", g.after, "/"
+print "9"
 print 'is alive: ', g.isalive()
-g.close()
+#g.close()
 print 'is alive: ', g.isalive()
+
+
+gdb_process = pexpect.spawn('bash')
+gdb_process.expect(BASH_PROMPT)
+print GDB_INIT_CMD.format(INIT_FILE, C_OUT)
+gdb_process.sendline(GDB_INIT_CMD.format(INIT_FILE, C_OUT))
+gdb_process.expect(GDB_PROMPT)
+
+# Set up logging to file
+print SET_LOG_FILE.format(LOG_FILE)
+gdb_process.sendline(SET_LOG_FILE.format(LOG_FILE))
+gdb_process.expect(GDB_PROMPT)
+print RUN
+gdb_process.sendline(RUN)
+gdb_process.expect(GDB_PROMPT)
+print SET_LOG_ON
+gdb_process.sendline(SET_LOG_ON)
+gdb_process.expect(OUTPUT_REDIRECT.format(LOG_FILE))
+print SRC_LINE
+gdb_process.sendline(SRC_LINE)
+gdb_process.expect(GDB_PROMPT)
+
+while 1:
+	print 'is alive: ', gdb_process.isalive()

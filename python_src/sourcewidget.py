@@ -54,7 +54,8 @@ class SourceTopBar(QtGui.QWidget):
 	def prepareVis(self, filename):
 		command = C_COMPILE.format(self.formatPath(filename), C_OUT)
 
-		gdb_init()
+		curr_line = gdbInit()
+		self.source_window.highlightLine(int(curr_line))
 
 		#os.system(C_COMPILE.format(self.formatPath(filename), C_OUT))
 		#os.system("gdb -q -x test.py")
@@ -91,7 +92,7 @@ class SourceWindow(QtGui.QListWidget):
 	def highlightLine(self, line_num):
 		self.setCurrentRow(line_num)
 		disas(line_num)
-		lines = parse_disas()
+		lines = parseDisas()
 		self.assembly_widget.displayLines(lines)
 
 	def isCSource(self, filename):

@@ -58,6 +58,10 @@ class StackVisualizer(QtGui.QWidget):
 
 	def functionStep(self):
 		print "function"
+		# only if source loaded! check!
+		[new_frame, src_line] = gdbFunctionStep()
+		self.stack_and_frame_widget.addFrame(new_frame)
+		self.source_and_assembly_widget.highlightLine(src_line)
 
 	def run(self):
 		print "run"

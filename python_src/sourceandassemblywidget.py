@@ -15,3 +15,6 @@ class SourceAndAssemblyWidget(QtGui.QFrame):
 		grid = QtGui.QGridLayout(self)
 		splitterWrapVert(grid, [self.source_widget, self.assembly_widget])
 		self.setLayout(grid)
+
+	def highlightLine(self, line_num):
+		self.source_widget.highlightLine(line_num)
