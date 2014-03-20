@@ -39,6 +39,7 @@ class FrameWindow(QtGui.QWidget):
 		self.initUI()
 		self.current_frame = None
 		self.frame_display = None
+		self.base_label = None
 
 	def initUI(self):
 		self.frame = QtGui.QVBoxLayout()
@@ -46,22 +47,27 @@ class FrameWindow(QtGui.QWidget):
 		self.setLayout(self.frame)
 
 	def displayFrame(self, frame):
+		self.frame.removeWidget
 		if frame != self.current_frame:
 			if self.frame_display != None:
-				self.frame_display.hide()
-				self.frame.removeWidget(self.frame_display)
-				self.frame_display.deleteLater()
+				self.clear()
 
 			self.current_frame = frame
 			self.frame_display = FrameDisplay(frame)
-			self.frame.addWidget(self.frame_display)
+			self.base_label = QtGui.QLabel()
+			self.base_label.setText("Frame bottom: " + frame.bottom)
+			self.frame.addWidget(self.frame_display, 1)
+			self.frame.addWidget(self.base_label)
 
 	def clear(self):
-		self.current_frame = None
+		self.removeItem(self.frame_display)
+		self.removeItem(self.base_label)
+
 		self.frame_display = None
+		self.base_label = None
 
-		# First item is stretch - do not remove
-		for i in range (1, self.frame.count()):
-			self.frame.itemAt(i).widget().close()
-			self.frame.takeAt(i)
-
+	def removeItem(self, item):
+		if item:
+			item.hide()
+			self.frame.removeWidget(item)
+			item.deleteLater()

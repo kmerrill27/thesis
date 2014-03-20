@@ -74,7 +74,7 @@ class GDBProcess:
 		self.process.expect(GDB_PROMPT)
 
 		self.flushToLogFile()
-		[title, line, registers] = parseFrameInfo()
+		[title, line, bottom, registers] = parseFrameInfo()
 		self.resetLogging()
 
 		self.process.sendline(PRINT_REGISTER.format(BASE_POINTER))
@@ -86,7 +86,7 @@ class GDBProcess:
 		[my_ebp, my_esp] = parseRegisterVals()
 		self.resetLogging()
 
-		frame = StackFrame(title, my_ebp, my_esp)
+		frame = StackFrame(title, my_ebp, my_esp, bottom)
 
 		for reg in registers:
 
@@ -94,10 +94,10 @@ class GDBProcess:
 				reg.title = "Callee " + reg.title
 			elif reg.title in STACK_POINTERS:
 				reg.title = "Return address"
-			item = FrameItem(reg.title, reg.addr, reg.bytes, None)
+			item = FrameItem(reg.title, reg.addr, reg.length, None)
 			frame.addItem(item)
 
-			self.process.sendline(VAL_AT_ADDR.format(item.bytes, item.addr))
+			self.process.sendline(VAL_AT_ADDR.format(1, item.addr))
 			self.process.expect(GDB_PROMPT)
 
 		self.flushToLogFile()
@@ -118,7 +118,7 @@ class GDBProcess:
 
 		for sym in symbols:
 			#item = FrameItem(sym.title, "$ebp+" + sym.addr, sym.bytes, None)
-			item = FrameItem(sym.title, hex(int(frame.frame_ptr, 16) + int(sym.addr)), sym.bytes, None)
+			item = FrameItem(sym.title, hex(int(frame.frame_ptr, 16) + int(sym.addr)), sym.length, None)
 			frame.addItem(item)
 
 			#self.process.sendline(VAL_AT_ADDR.format(item.bytes, item.addr))

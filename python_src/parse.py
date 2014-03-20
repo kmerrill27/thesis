@@ -5,10 +5,10 @@ from PyQt4 import QtCore
 
 class SymbolTuple:
 
-	def __init__(self, addr, title, bytes):
+	def __init__(self, addr, title, length):
 		self.addr = addr
 		self.title = title
-		self.bytes = bytes
+		self.length = length
 
 def readLines():
 	with open(LOG_FILE) as f:
@@ -72,6 +72,9 @@ def parseFrameInfo():
 	line_match = re.match(LINE_REGEX, lines)
 	line = line_match.group(1)
 
+	bottom_match = re.match(BOTTOM_REGEX, lines)
+	bottom = bottom_match.group(1)
+
 	function_match = re.match(FUNCTION_REGEX, lines)
 	title = function_match.group(1)
 
@@ -79,7 +82,7 @@ def parseFrameInfo():
 
 	clearFile()
 
-	return [title, line, registers]
+	return [title, line, bottom, registers]
 
 def parseSavedRegisters():
 	registers = []
@@ -93,8 +96,8 @@ def parseSavedRegisters():
 		reg_match = re.match(REG_ADDR_REGEX, reg_item.strip())
 		title = reg_match.group(1)
 		addr = reg_match.group(2)
-		# Hard coding for 64-bit machine (registers are 2 bytes)
-		reg = SymbolTuple(addr, title, 2)
+		# Hard coding for 64-bit machine (registers are 1 byte)
+		reg = SymbolTuple(addr, title, 8)
 		registers.append(reg)
 
 	return registers
@@ -123,7 +126,7 @@ def parseSymbols():
 			title = sym_match.group(1)
 			addr = sym_match.group(2)
 			length = sym_match.group(3)
-			sym = SymbolTuple(addr, title, int(length)/4)
+			sym = SymbolTuple(addr, title, length)
 			symbols.append(sym)
 
 	clearFile()

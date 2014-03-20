@@ -53,6 +53,7 @@ STACK_POINTERS = ["rip", "eip"]
 PTR_REGEX = "([0-9a-zA-Z]+):\s.*"
 ADDR_REGEX = "[0-9a-zA-Z]+:\s(.*)"
 LEVEL_REGEX = ".*[.|\s]*Stack level ([0-9])+"
+BOTTOM_REGEX = ".*[.|\s]*Stack level [0-9]+, frame at ([0-9a-zA-Z]*):"
 FUNCTION_REGEX = ".*\s*rip\s*=.*in\s+([0-9a-zA-Z\_\-]+)"
 LINE_REGEX = ".*\.c:([0-9]+)\);"
 SAVED_REG_REGEX = ".*Saved registers:\s*(.*)"
