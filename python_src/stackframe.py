@@ -46,8 +46,22 @@ class FrameDisplay(QtGui.QTableWidget):
 			for i in range(0, self.rowCount()):
 				self.setRowHeight(i, row_size)
 
+	def addTempStorageSpace(self, last_addr):
+		temp_space = (last_addr - int(self.frame.stack_ptr, 16)) / 4
+
+		for i in range(0, temp_space):
+			self.insertRow(self.rowCount())
+			header = QtGui.QTableWidgetItem("")
+			curr_addr = hex(int(self.frame.stack_ptr, 16) + 4*i)
+			header.setToolTip("^ " + str(curr_addr))
+			self.setVerticalHeaderItem(self.rowCount() - 1, header)
+
+			if self.frame.stack_ptr == curr_addr:
+				header.setText(STACK_POINTER)
+
 	def updateDisplay(self):
 		sorted_list = sorted(self.frame.items, key=lambda x: x.addr)
+		self.addTempStorageSpace(int(sorted_list[0].addr, 16))
 		for item in sorted_list:
 			self.displayItem(item)
 
