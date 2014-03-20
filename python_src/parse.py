@@ -16,7 +16,7 @@ def readLines():
 
 def readFile():
 	with open(LOG_FILE) as f:
-		lines = f.read().replace('\n', '')
+		lines = f.read().replace('\n', ' ')
 	return lines
 
 def clearFile():
@@ -46,8 +46,6 @@ def parseDisas():
 def parseLineNum():
 	lines = readFile()
 
-	print lines
-
 	line_match = re.match(LINE_NUM_REGEX, lines)
 	line_num = line_match.group(1)
 
@@ -55,26 +53,32 @@ def parseLineNum():
 
 	return line_num
 
-def parseFrameInfo():
-	lines = readFile()
+def parsePointers():
+	lines = readLines()
 
-	ebp_match = re.match(ADDR_REGEX, lines)
+	ebp_match = re.match(PTR_REGEX, lines[0])
 	my_ebp = ebp_match.group(1)
-	esp_match = re.match(ADDR_REGEX, lines)
+	esp_match = re.match(PTR_REGEX, lines[1])
 	my_esp = esp_match.group(1)
 
-	level_match = re.match(LEVEL_REGEX, lines)
-	level = level_match.group(1)
+	clearFile()
+
+	return [my_ebp, my_esp]
+
+def parseFrameInfo():
+	lines = readFile()
 
 	line_match = re.match(LINE_REGEX, lines)
 	line = line_match.group(1)
 
 	function_match = re.match(FUNCTION_REGEX, lines)
-	function = function_match.group(1)
+	title = function_match.group(1)
 
-	title = function + " (" + level + ")"
+	registers = parseSavedRegisters()
 
-	return [title, line, my_ebp, my_esp]
+	clearFile()
+
+	return [title, line, registers]
 
 def parseSavedRegisters():
 	registers = []
@@ -91,8 +95,6 @@ def parseSavedRegisters():
 		reg = AddressTitleTuple(addr, title)
 		registers.append(reg)
 
-	clearFile()
-
 	return registers
 
 def parseVals():
@@ -103,7 +105,7 @@ def parseVals():
 		val_match = re.match(ADDR_REGEX, line)
 		if val_match:
 			val = val_match.group(1)
-			vals.add(val)
+			vals.append(val)
 
 	clearFile()
 
@@ -119,7 +121,7 @@ def parseSymbols():
 			title = sym_match.group(1)
 			addr = sym_match.group(2)
 			sym = AddressTitleTuple(addr, title)
-			symbols.add(sym)
+			symbols.append(sym)
 
 	clearFile()
 

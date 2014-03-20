@@ -128,5 +128,13 @@ print SRC_LINE
 gdb_process.sendline(SRC_LINE)
 gdb_process.expect(GDB_PROMPT)
 
-while 1:
-	print 'is alive: ', gdb_process.isalive()
+gdb_process.sendline(REG_VAL.format(BASE_POINTER))
+gdb_process.expect(GDB_PROMPT)
+gdb_process.sendline(REG_VAL.format(STACK_POINTER))
+gdb_process.expect(GDB_PROMPT)
+gdb_process.sendline(INFO_FRAME)
+gdb_process.expect(GDB_PROMPT)
+print "before: /", g.before, "/"
+print "after: /", g.after, "/"
+print "10"
+print 'is alive: ', g.isalive()

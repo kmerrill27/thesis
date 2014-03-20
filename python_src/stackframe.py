@@ -17,11 +17,6 @@ class StackFrame:
 
 class FrameItem:
 
-	def __init__(self, title, addr):
-		self.title = title
-		self.addr = addr
-		self.value = None
-
 	def __init__(self, title, addr, value):
 		self.title = title
 		self.addr = addr
@@ -55,7 +50,7 @@ class FrameDisplay(QtGui.QFrame):
 
 	def displayItem(self, frame_item):
 		item_title = QtGui.QLabel()
-		item_title.setText(frame_item.title + ":")
+		item_title.setText(frame_item.title + " (at " + frame_item.addr + ") :")
 		item_value = QtGui.QLabel()
 		item_value.setText(str(frame_item.value))
 

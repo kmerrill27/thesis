@@ -59,6 +59,8 @@ class StackWindow(QtGui.QWidget):
 
 		self.stack.append(frame)
 
+		self.frameSelected()
+
 	def removeFrame(self):
 		assert len(self.stack) == self.stack_box.count()-1
 

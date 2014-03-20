@@ -8,21 +8,26 @@ from runstate import *
 
 class SourceWidget(QtGui.QFrame):
 
-	def __init__(self, stack_and_frame_widget, assembly_widget):
+	def __init__(self, gdb_process, stack_and_frame_widget, assembly_widget):
 		super(SourceWidget, self).__init__()
+		self.gdb_process = gdb_process
 		self.stack_and_frame_widget = stack_and_frame_widget
 		self.assembly_widget = assembly_widget
 		self.initUI()
 
 	def initUI(self):
 		self.window = SourceWindow(self.stack_and_frame_widget, self.assembly_widget)
-		self.top_bar = SourceTopBar(self.window)
+		self.top_bar = SourceTopBar(self.gdb_process, self.window)
 		frameWrapVert(self, [self.top_bar, self.window])
+
+	def highlightLine(self, line_num):
+		self.window.highlightLine(int(line_num))
 
 class SourceTopBar(QtGui.QWidget):
 
-	def __init__(self, source_window):
+	def __init__(self, gdb_process, source_window):
 		super(SourceTopBar, self).__init__()
+		self.gdb_process = gdb_process
 		self.source_window = source_window
 		self.initUI()
 
@@ -54,12 +59,8 @@ class SourceTopBar(QtGui.QWidget):
 	def prepareVis(self, filename):
 		command = C_COMPILE.format(self.formatPath(filename), C_OUT)
 
-		curr_line = gdbInit()
+		curr_line = self.gdb_process.gdbInit()
 		self.source_window.highlightLine(int(curr_line))
-
-		#os.system(C_COMPILE.format(self.formatPath(filename), C_OUT))
-		#os.system("gdb -q -x test.py")
-		#self.source_window.highlightLine(23)
 
 	def formatPath(self, filename):
 		if (platform.system() == "Windows"):

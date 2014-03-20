@@ -1,5 +1,6 @@
 from sourceandassemblywidget import *
 from stackandframewidget import *
+from runstate import *
 from defs import *
 
 class StackVisualizer(QtGui.QWidget):
@@ -11,8 +12,9 @@ class StackVisualizer(QtGui.QWidget):
 	def initUI(self):
 		grid = QtGui.QGridLayout(self)
 
+		self.gdb_process = GDBProcess()
 		self.stack_and_frame_widget = StackAndFrameWidget()
-		self.source_and_assembly_widget = SourceAndAssemblyWidget(self.stack_and_frame_widget)
+		self.source_and_assembly_widget = SourceAndAssemblyWidget(self.gdb_process, self.stack_and_frame_widget)
 		self.toolbar = QtGui.QToolBar()
 		self.setupToolbar()
 
@@ -54,21 +56,27 @@ class StackVisualizer(QtGui.QWidget):
 		self.toolbar.addWidget(spacer)
 
 	def lineStep(self):
-		print "line"
+		if self.gdb_process.process:
+			print "line"
 
 	def functionStep(self):
 		print "function"
-		# only if source loaded! check!
-		[new_frame, src_line] = gdbFunctionStep()
-		self.stack_and_frame_widget.addFrame(new_frame)
-		self.source_and_assembly_widget.highlightLine(src_line)
+		# Check if source loaded
+		if self.gdb_process.process:
+			[new_frame, src_line] = self.gdb_process.gdbFunctionStep()
+			self.stack_and_frame_widget.addFrame(new_frame)
+			self.source_and_assembly_widget.highlightLine(src_line)
 
 	def run(self):
-		print "run"
+		if self.gdb_process.process:
+			print "run"
 
 	def reset(self):
-		print "reset"
-		self.stack_and_frame_widget.clear()
+		# Check if source loaded
+		if self.gdb_process.process:
+			print "reset"
+			self.stack_and_frame_widget.clear()
 
 	def highlightSourceLine(self, line_num):
-		self.source_window.highlightLine(line_num)
+		if self.gdb_process.process:
+			self.source_window.highlightLine(line_num)

@@ -1,106 +1,152 @@
 import pexpect
 from defs import *
 from parse import *
+from stackframe import *
 
 # What if program needs user input?
 
-gdb_process = None
+class GDBProcess:
 
-def gdbInit():
-	# Open child bash process
-	gdb_process = pexpect.spawn('bash')
-	gdb_process.expect(BASH_PROMPT)
-	gdb_process.sendline(GDB_INIT_CMD.format(INIT_FILE, C_OUT))
-	gdb_process.expect(GDB_PROMPT)
+	def __init__(self):
+		self.process = None
 
-	# Set up logging to file
-	gdb_process.sendline(SET_LOG_FILE.format(LOG_FILE))
-	gdb_process.expect(GDB_PROMPT)
-	gdb_process.sendline(RUN)
-	gdb_process.expect(GDB_PROMPT)
-	gdb_process.sendline(SET_LOG_ON)
-	gdb_process.expect(OUTPUT_REDIRECT.format(LOG_FILE))
-	gdb_process.sendline(SRC_LINE)
-	gdb_process.expect(GDB_PROMPT)
+	# Must reset logging after each log file open
+	# Call after every parse
+	def resetLogging(self):
+		self.process.sendline(SET_LOG_OFF)
+		self.process.expect(DONE_LOGGING.format(LOG_FILE))
+		self.process.sendline(SET_LOG_ON)
+		self.process.expect(OUTPUT_REDIRECT.format(LOG_FILE))
 
-	line_num = parseLineNum()
+	# Hacky way to make sure output is flushed to file
+	# Call before every parse
+	def flushToLogFile(self):
+		self.process.sendline(TRACE_ON)
+		self.process.expect(GDB_PROMPT)
+		self.process.sendline(TRACE_OFF)
+		self.process.expect(GDB_PROMPT)
 
-	gdbFunctionStep()
-	# Set up initial stack
-	# Return current line
+	def gdbInit(self):
+		# Reset log file
+		clearFile()
 
-	return line_num
+		# Open child bash process
+		self.process = pexpect.spawn('bash')
+		self.process.expect(BASH_PROMPT)
+		self.process.sendline(GDB_INIT_CMD.format(INIT_FILE, C_OUT))
+		self.process.expect(GDB_PROMPT)
 
-def gdbLineStep():
-	gdb_process.sendline(LINE_STEP)
-	gdb_process.expect(GDB_PROMPT)
-	# Update stack args - check if hits breakpoint
-	# If hits breakpoint, in new function - update stack
-	# Check if finished
+		# Set up logging to file
+		self.process.sendline(SET_LOG_FILE.format(LOG_FILE))
+		self.process.expect(GDB_PROMPT)
+		self.process.sendline(RUN)
+		self.process.expect(GDB_PROMPT)
+		self.process.sendline(SET_LOG_ON)
+		self.process.expect(OUTPUT_REDIRECT.format(LOG_FILE))
+		self.process.sendline(SRC_LINE)
+		self.process.expect(GDB_PROMPT)
 
-def gdbFunctionStep():
-	#gdb_process.sendline(FUNCTION_STEP)
-	#gdb_process.expect(GDB_PROMPT)
+		self.process.sendline("continue")
+		self.process.expect(GDB_PROMPT)
 
-	gdb_process.sendline(FUNCTION_SCRIPT)
-	gdb_process.expect(GDB_PROMPT)
+		line_num = parseLineNum()
 
-	# title = factorial (0)
-	[title, line, my_ebp, my_esp, registers] = parseFrameInfo()
+		# TODO: Set up initial stack
 
-	frame = StackFrame(title, my_ebp, my_esp)
+		return line_num
 
-	for reg in registers:
+	def gdbLineStep(self):
+		self.resetLogging()
 
-		if reg.title in BASE_POINTERS:
-			reg.title = "Callee " + reg.title
-		elif reg.title in STACK_POINTERS:
-			reg.title = "Return address"
-		item = FrameItem(reg.title, reg.addr)
-		frame.addItem(item)
+		self.process.sendline(LINE_STEP)
+		self.process.expect(GDB_PROMPT)
+		# Update stack args - check if hits breakpoint
+		# If hits breakpoint, in new function - update stack
+		# Check if finished
 
-		gdb_process.sendline(VAL_AT_ADDR.format(item.addr))
-		gdb_process.expect(GDB_PROMPT)
+	def gdbFunctionStep(self):
+		self.process.sendline(FUNCTION_STEP)
+		self.process.expect(GDB_PROMPT)
 
-	reg_vals = parseVals()
+		self.resetLogging()
 
-	assert(len(registers) == len(reg_vals))
+		self.process.sendline(INFO_FRAME)
+		self.process.expect(GDB_PROMPT)
 
-	for i in range(0, len(frame.items)):
-		frame.items[len(frame.items) - 1 - i].value = reg_vals[i]
+		self.flushToLogFile()
+		[title, line, registers] = parseFrameInfo()
+		self.resetLogging()
 
-	title = frame.title.split()
-	gdb_process.sendline(INFO_SCOPE.format(title[0]))
-	gdb_process.expect(GDB_PROMPT)
+		self.process.sendline(REG_VAL.format(BASE_POINTER))
+		self.process.expect(GDB_PROMPT)
+		self.process.sendline(REG_VAL.format(STACK_POINTER))
+		self.process.expect(GDB_PROMPT)
 
-	symbols = parseSymbols()
-	for sym in symbols:
-		item = FrameItem(sym.title, frame.frame_ptr + sym.offset)
-		frame.addItem(item)
+		self.flushToLogFile()
+		[my_ebp, my_esp] = parsePointers()
+		self.resetLogging()
 
-		gdb_process.sendline(VAL_AT_ADDR.format(item.addr))
-		gdb_process.expect(GDB_PROMPT)
+		frame = StackFrame(title, my_ebp, my_esp)
 
-	sym_vals = parseVals()
+		for reg in registers:
 
-	assert(len(symbols) == len(sym_vals))
+			if reg.title in BASE_POINTERS:
+				reg.title = "Callee " + reg.title
+			elif reg.title in STACK_POINTERS:
+				reg.title = "Return address"
+			item = FrameItem(reg.title, reg.addr, None)
+			frame.addItem(item)
 
-	for i in range(0, len(symbols)):
-		frame.items[len(symbols) - 1 - i].value = sym_vals[i]
+			self.process.sendline(VAL_AT_ADDR.format(item.addr))
+			self.process.expect(GDB_PROMPT)
 
-	return [frame, line]
+		self.flushToLogFile()
+		reg_vals = parseVals()
+		self.resetLogging()
 
-	# Update stack
-	# Check if finished
+		assert(len(registers) == len(reg_vals))
 
-def gdbRun():
-	gdb_process.sendline(REMOVE_BR)
-	gdb_process.expect(GDB_PROMPT)
-	gdb_process.sendline(CONTINUE)
-	gdb_process.expect(GDB_PROMPT)
-	# Get result from log
+		for i in range(0, len(frame.items)):
+			frame.items[len(frame.items) - 1 - i].value = reg_vals[i]
 
-def gdbReset():
-	gdb_process.close()
-	init_gdb()
-	# Clear stack
+		self.process.sendline(INFO_SCOPE.format(frame.title))
+		self.process.expect(GDB_PROMPT)
+
+		self.flushToLogFile()
+		symbols = parseSymbols()
+		self.resetLogging()
+
+		print frame.frame_ptr
+		for sym in symbols:
+			item = FrameItem(sym.title, hex(int(frame.frame_ptr, 16) + int(sym.addr)), None)
+			frame.addItem(item)
+
+			self.process.sendline(VAL_AT_ADDR.format(item.addr))
+			self.process.expect(GDB_PROMPT)
+
+		self.flushToLogFile()
+		sym_vals = parseVals()
+		self.resetLogging()
+
+		assert(len(symbols) == len(sym_vals))
+
+		for i in range(0, len(symbols)):
+			frame.items[len(symbols) - 1 - i].value = sym_vals[i]
+
+		return [frame, line]
+
+		# TODO: Check if finished
+
+	def gdbRun(self):
+		self.resetLogging()
+
+		self.process.sendline(REMOVE_BR)
+		self.process.expect(GDB_PROMPT)
+		self.process.sendline(CONTINUE)
+		self.process.expect(GDB_PROMPT)
+		# Get result from log
+
+	def gdbReset(self):
+		self.process.close()
+		self.gdbInit()
+		# Clear stack

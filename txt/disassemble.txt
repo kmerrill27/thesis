@@ -1,5 +1,11 @@
 
-Breakpoint 1, main () at fact_rec.c:13
-13	 	int n = 5;
-=> 0x0000000100000e44 <main+4>:	48 83 ec 20	sub    $0x20,%rsp
-   0x0000000100000e48 <main+8>:	c7 45 f4 05 00 00 00	movl   $0x5,-0xc(%rbp)
+Breakpoint 1, factorial (n=5) at fact_rec.c:28
+28	 		return n * factorial(n-1);
+=> 0x0000000100000ec4 <factorial+36>:	8b 45 fc	mov    -0x4(%rbp),%eax
+   0x0000000100000ec7 <factorial+39>:	83 e8 01	sub    $0x1,%eax
+   0x0000000100000eca <factorial+42>:	89 c7	mov    %eax,%edi
+   0x0000000100000ecc <factorial+44>:	e8 cf ff ff ff	callq  0x100000ea0 <factorial>
+   0x0000000100000ed1 <factorial+49>:	89 c1	mov    %eax,%ecx
+   0x0000000100000ed3 <factorial+51>:	8b 55 fc	mov    -0x4(%rbp),%edx
+   0x0000000100000ed6 <factorial+54>:	0f af ca	imul   %edx,%ecx
+   0x0000000100000ed9 <factorial+57>:	89 4d f4	mov    %ecx,-0xc(%rbp)

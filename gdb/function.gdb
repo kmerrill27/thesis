@@ -1,3 +1,5 @@
-x/ $rbp # My frame pointer
-x/ $rsp # My stack pointer
+# Get current frame pointer
+x/ $rbp
+# Get current stack pointer
+x/ $rsp
 info frame
