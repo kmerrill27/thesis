@@ -1,4 +1,5 @@
 import os
+import pexpect
 from defs import *
 
 def disas(src_line):
@@ -13,4 +14,6 @@ def disas(src_line):
 		f.write(script)
 
 	# Run script against GDB to collect assembly code for line
-	os.system(RUN_SCRIPT.format(SCRIPT_FILE, C_OUT))
+	process = pexpect.spawn(RUN_SCRIPT.format(SCRIPT_FILE, C_OUT))
+	process.expect(GDB_PROMPT)
+	process.close()

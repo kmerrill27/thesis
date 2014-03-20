@@ -5,8 +5,7 @@ set disassemble-next-line on
 set logging overwrite on
 set logging redirect on
 set logging file ./../txt/disassemble.txt
-break 28
+break 26
 set logging on
 run
 set logging off
-q

@@ -3,10 +3,10 @@ from helper import *
 
 class StackFrame:
 
-	def __init__(self, title, stack_ptr, frame_ptr):
+	def __init__(self, title, frame_ptr, stack_ptr):
 		self.title = title
-		self.stack_ptr = stack_ptr
 		self.frame_ptr = frame_ptr
+		self.stack_ptr = stack_ptr
 		self.items = []
 
 	def addItem(self, frame_item):
@@ -17,9 +17,10 @@ class StackFrame:
 
 class FrameItem:
 
-	def __init__(self, title, addr, value):
+	def __init__(self, title, addr, bytes, value):
 		self.title = title
 		self.addr = addr
+		self.bytes = bytes
 		self.value = value
 
 class FrameDisplay(QtGui.QFrame):
@@ -31,10 +32,10 @@ class FrameDisplay(QtGui.QFrame):
 
 	def initUI(self):
 		stack_ptr = QtGui.QLabel()
-		stack_ptr.setText("Stack ptr: " + self.frame.stack_ptr)
+		stack_ptr.setText("Stack ptr: " + str(int(self.frame.stack_ptr, 16)))
 
 		frame_ptr = QtGui.QLabel()
-		frame_ptr.setText("Frame ptr: " + self.frame.frame_ptr)
+		frame_ptr.setText("Frame ptr: " + str(int(self.frame.frame_ptr, 16)))
 
 		frame_disp = QtGui.QWidget()
 		self.box = QtGui.QVBoxLayout()
@@ -42,15 +43,16 @@ class FrameDisplay(QtGui.QFrame):
 		self.updateDisplay()
 		frame_disp.setLayout(self.box)
 
-		frameWrapVert(self, [frame_ptr, frame_disp, stack_ptr])
+		frameWrapVert(self, [stack_ptr, frame_disp, frame_ptr])
 
 	def updateDisplay(self):
-		for item in self.frame.items:
+		sorted_list = sorted(self.frame.items, key=lambda x: x.addr)
+		for item in sorted_list:
 			self.displayItem(item)
 
 	def displayItem(self, frame_item):
 		item_title = QtGui.QLabel()
-		item_title.setText(frame_item.title + " (at " + frame_item.addr + ") :")
+		item_title.setText(frame_item.title + " (at " + str(int(frame_item.addr, 16)) + ") :")
 		item_value = QtGui.QLabel()
 		item_value.setText(str(frame_item.value))
 

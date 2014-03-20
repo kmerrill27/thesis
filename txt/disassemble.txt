@@ -1,11 +1,8 @@
 
-Breakpoint 1, factorial (n=5) at fact_rec.c:28
-28	 		return n * factorial(n-1);
-=> 0x0000000100000ec4 <factorial+36>:	8b 45 fc	mov    -0x4(%rbp),%eax
-   0x0000000100000ec7 <factorial+39>:	83 e8 01	sub    $0x1,%eax
-   0x0000000100000eca <factorial+42>:	89 c7	mov    %eax,%edi
-   0x0000000100000ecc <factorial+44>:	e8 cf ff ff ff	callq  0x100000ea0 <factorial>
-   0x0000000100000ed1 <factorial+49>:	89 c1	mov    %eax,%ecx
-   0x0000000100000ed3 <factorial+51>:	8b 55 fc	mov    -0x4(%rbp),%edx
-   0x0000000100000ed6 <factorial+54>:	0f af ca	imul   %edx,%ecx
-   0x0000000100000ed9 <factorial+57>:	89 4d f4	mov    %ecx,-0xc(%rbp)
+Breakpoint 1, bin_search (list=0x7fff5fbffa04, lo=0, hi=9, key=4)
+    at bin_search.c:26
+26		if (lo > hi)
+=> 0x0000000100000e05 <bin_search+21>:	8b 45 f4	mov    -0xc(%rbp),%eax
+   0x0000000100000e08 <bin_search+24>:	8b 4d f0	mov    -0x10(%rbp),%ecx
+   0x0000000100000e0b <bin_search+27>:	39 c8	cmp    %ecx,%eax
+   0x0000000100000e0d <bin_search+29>:	7e 0c	jle    0x100000e1b <bin_search+43>

@@ -9,4 +9,3 @@ break ARG2
 set logging on
 run
 set logging off
-q

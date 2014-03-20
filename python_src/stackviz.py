@@ -18,15 +18,6 @@ class StackVisualizer(QtGui.QWidget):
 		self.toolbar = QtGui.QToolBar()
 		self.setupToolbar()
 
-		# Testing
-		for i in range(0, 10):
-			frame = StackFrame("Frame " + str(i), "0x0214321432", "0x243214123")
-			frame.addItem(FrameItem("Callee Registers", "0x034039283", 4))
-			frame.addItem(FrameItem("Return value", "0x034039283", 4))
-			frame.addItem(FrameItem("Local vars", "0x034039283", 4))
-			self.stack_and_frame_widget.addFrame(frame)
-		self.stack_and_frame_widget.removeFrame()
-
 		splitterWrapHoriz(grid, [self.stack_and_frame_widget, self.source_and_assembly_widget])
 		grid.addWidget(self.toolbar)
 		self.setLayout(grid)
@@ -69,6 +60,7 @@ class StackVisualizer(QtGui.QWidget):
 
 	def run(self):
 		if self.gdb_process.process:
+			self.gdb_process.gdbRun()
 			print "run"
 
 	def reset(self):
@@ -76,6 +68,7 @@ class StackVisualizer(QtGui.QWidget):
 		if self.gdb_process.process:
 			print "reset"
 			self.stack_and_frame_widget.clear()
+			self.source_and_assembly_widget.reset()
 
 	def highlightSourceLine(self, line_num):
 		if self.gdb_process.process:

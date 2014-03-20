@@ -77,13 +77,13 @@ class GDBProcess:
 		[title, line, registers] = parseFrameInfo()
 		self.resetLogging()
 
-		self.process.sendline(REG_VAL.format(BASE_POINTER))
+		self.process.sendline(PRINT_REGISTER.format(BASE_POINTER))
 		self.process.expect(GDB_PROMPT)
-		self.process.sendline(REG_VAL.format(STACK_POINTER))
+		self.process.sendline(PRINT_REGISTER.format(STACK_POINTER))
 		self.process.expect(GDB_PROMPT)
 
 		self.flushToLogFile()
-		[my_ebp, my_esp] = parsePointers()
+		[my_ebp, my_esp] = parseRegisterVals()
 		self.resetLogging()
 
 		frame = StackFrame(title, my_ebp, my_esp)
@@ -94,10 +94,10 @@ class GDBProcess:
 				reg.title = "Callee " + reg.title
 			elif reg.title in STACK_POINTERS:
 				reg.title = "Return address"
-			item = FrameItem(reg.title, reg.addr, None)
+			item = FrameItem(reg.title, reg.addr, reg.bytes, None)
 			frame.addItem(item)
 
-			self.process.sendline(VAL_AT_ADDR.format(item.addr))
+			self.process.sendline(VAL_AT_ADDR.format(item.bytes, item.addr))
 			self.process.expect(GDB_PROMPT)
 
 		self.flushToLogFile()
@@ -116,16 +116,17 @@ class GDBProcess:
 		symbols = parseSymbols()
 		self.resetLogging()
 
-		print frame.frame_ptr
 		for sym in symbols:
-			item = FrameItem(sym.title, hex(int(frame.frame_ptr, 16) + int(sym.addr)), None)
+			#item = FrameItem(sym.title, "$ebp+" + sym.addr, sym.bytes, None)
+			item = FrameItem(sym.title, hex(int(frame.frame_ptr, 16) + int(sym.addr)), sym.bytes, None)
 			frame.addItem(item)
 
-			self.process.sendline(VAL_AT_ADDR.format(item.addr))
+			#self.process.sendline(VAL_AT_ADDR.format(item.bytes, item.addr))
+			self.process.sendline(PRINT_SYMBOL.format(sym.title))
 			self.process.expect(GDB_PROMPT)
 
 		self.flushToLogFile()
-		sym_vals = parseVals()
+		sym_vals = parseSymbolVals()
 		self.resetLogging()
 
 		assert(len(symbols) == len(sym_vals))

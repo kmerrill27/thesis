@@ -3,11 +3,12 @@ import re
 from defs import *
 from PyQt4 import QtCore
 
-class AddressTitleTuple:
+class SymbolTuple:
 
-	def __init__(self, addr, title):
+	def __init__(self, addr, title, bytes):
 		self.addr = addr
 		self.title = title
+		self.bytes = bytes
 
 def readLines():
 	with open(LOG_FILE) as f:
@@ -56,10 +57,10 @@ def parseLineNum():
 def parsePointers():
 	lines = readLines()
 
-	ebp_match = re.match(PTR_REGEX, lines[0])
-	my_ebp = ebp_match.group(1)
-	esp_match = re.match(PTR_REGEX, lines[1])
+	esp_match = re.match(PTR_REGEX, lines[0])
 	my_esp = esp_match.group(1)
+	ebp_match = re.match(PTR_REGEX, lines[1])
+	my_ebp = ebp_match.group(1)
 
 	clearFile()
 
@@ -92,7 +93,8 @@ def parseSavedRegisters():
 		reg_match = re.match(REG_ADDR_REGEX, reg_item.strip())
 		title = reg_match.group(1)
 		addr = reg_match.group(2)
-		reg = AddressTitleTuple(addr, title)
+		# Hard coding for 64-bit machine (registers are 2 bytes)
+		reg = SymbolTuple(addr, title, 2)
 		registers.append(reg)
 
 	return registers
@@ -120,9 +122,38 @@ def parseSymbols():
 		if sym_match:
 			title = sym_match.group(1)
 			addr = sym_match.group(2)
-			sym = AddressTitleTuple(addr, title)
+			length = sym_match.group(3)
+			sym = SymbolTuple(addr, title, int(length)/4)
 			symbols.append(sym)
 
 	clearFile()
 
 	return symbols
+
+def parseSymbolVals():
+	vals = []
+	lines = readLines()
+
+	for line in lines:
+		val_match = re.match(PRINT_REGEX, line)
+		if val_match:
+			val = val_match.group(1)
+			vals.append(val)
+
+	clearFile()
+
+	return vals
+
+def parseRegisterVals():
+	vals = []
+	lines = readLines()
+
+	for line in lines:
+		val_match = re.match(PRINT_REGISTER_REGEX, line)
+		if val_match:
+			val = val_match.group(1)
+			vals.append(val)
+
+	clearFile()
+
+	return vals

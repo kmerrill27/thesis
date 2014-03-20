@@ -23,6 +23,9 @@ class SourceWidget(QtGui.QFrame):
 	def highlightLine(self, line_num):
 		self.window.highlightLine(int(line_num))
 
+	def reset(self):
+		self.top_bar.prepareVis(None)
+
 class SourceTopBar(QtGui.QWidget):
 
 	def __init__(self, gdb_process, source_window):
@@ -57,8 +60,11 @@ class SourceTopBar(QtGui.QWidget):
 				self.prepareVis(str(filename))
 
 	def prepareVis(self, filename):
-		command = C_COMPILE.format(self.formatPath(filename), C_OUT)
+		if (filename):
+			command = C_COMPILE.format(self.formatPath(filename), C_OUT)
+			os.system(command)
 
+		# If no filename, just reset with current out file
 		curr_line = self.gdb_process.gdbInit()
 		self.source_window.highlightLine(int(curr_line))
 

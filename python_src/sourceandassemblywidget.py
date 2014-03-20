@@ -19,3 +19,6 @@ class SourceAndAssemblyWidget(QtGui.QFrame):
 
 	def highlightLine(self, line_num):
 		self.source_widget.highlightLine(line_num)
+
+	def reset(self):
+		self.source_widget.reset()
