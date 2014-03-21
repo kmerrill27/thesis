@@ -7,6 +7,7 @@ Why?
 # c = pexpect.spawn ('/usr/bin/env python ./python.py')
 
 import pexpect
+import re
 from defs import *
 
 c = pexpect.spawn ('/usr/bin/env python')
@@ -34,25 +35,6 @@ p.expect("\$")
 p.sendline('ls')  # For instance
 p.expect("\$")
 print(p.before)  # Get the output from the last command.
-
-e = pexpect.spawn("bash")
-e.expect("\$")
-e.sendline("gcc -g ../c_src/fact_rec.c -o stackviz")
-e.expect("\$") #no output
-print "before: /", e.before, "/"
-print "BETWEEN"
-print "after: /", e.after, "/"
-print 'is alive: ', e.isalive()
-e.sendline('/usr/bin/env python')
-e.expect ('>>>')
-print e.after
-e.sendline('1')
-e.expect("1")
-print "before: /", e.before, "/"
-print "after: /", e.after, "/"
-print 'is alive: ', e.isalive()
-e.close()
-print 'is alive: ', e.isalive()
 
 g = pexpect.spawn("bash")
 g.expect("\$")
@@ -113,28 +95,24 @@ gdb_process.expect(BASH_PROMPT)
 print GDB_INIT_CMD.format(INIT_FILE, C_OUT)
 gdb_process.sendline(GDB_INIT_CMD.format(INIT_FILE, C_OUT))
 gdb_process.expect(GDB_PROMPT)
-
 # Set up logging to file
-print SET_LOG_FILE.format(LOG_FILE)
-gdb_process.sendline(SET_LOG_FILE.format(LOG_FILE))
-gdb_process.expect(GDB_PROMPT)
-print RUN
+#print SET_LOG_FILE.format(LOG_FILE)
+#gdb_process.sendline(SET_LOG_FILE.format(LOG_FILE))
+#gdb_process.expect(GDB_PROMPT)
+#print RUN
 gdb_process.sendline(RUN)
 gdb_process.expect(GDB_PROMPT)
-print SET_LOG_ON
-gdb_process.sendline(SET_LOG_ON)
-gdb_process.expect(OUTPUT_REDIRECT.format(LOG_FILE))
-print SRC_LINE
-gdb_process.sendline(SRC_LINE)
+#print SET_LOG_ON
+#gdb_process.sendline(SET_LOG_ON)
+#gdb_process.expect(OUTPUT_REDIRECT.format(LOG_FILE))
+gdb_process.sendline(CONTINUE)
 gdb_process.expect(GDB_PROMPT)
-
-gdb_process.sendline(REG_VAL.format(BASE_POINTER))
+gdb_process.sendline(FUNCTION_STEP)
 gdb_process.expect(GDB_PROMPT)
-gdb_process.sendline(REG_VAL.format(STACK_POINTER))
-gdb_process.expect(GDB_PROMPT)
-gdb_process.sendline(INFO_FRAME)
-gdb_process.expect(GDB_PROMPT)
-print "before: /", g.before, "/"
-print "after: /", g.after, "/"
-print "10"
-print 'is alive: ', g.isalive()
+bef = gdb_process.before.strip()
+print bef
+retval_match = re.search(RETURN_REGEX, bef)
+if retval_match:
+	retval = retval_match.group(1)
+	print retval
+print 'is alive: ', gdb_process.isalive()

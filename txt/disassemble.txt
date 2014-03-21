@@ -1,6 +1,5 @@
 
-Breakpoint 1, insert (root=0x0, val=7) at bst.c:48
-48		if (!root)
-=> 0x0000000100000b8f <insert+15>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
-   0x0000000100000b93 <insert+19>:	48 83 f8 00	cmp    $0x0,%rax
-   0x0000000100000b97 <insert+23>:	75 39	jne    0x100000bd2 <insert+82>
+Breakpoint 1, main () at fact_rec.c:13
+13	 	int n = 5;
+=> 0x0000000100000e44 <main+4>:	48 83 ec 20	sub    $0x20,%rsp
+   0x0000000100000e48 <main+8>:	c7 45 f4 05 00 00 00	movl   $0x5,-0xc(%rbp)

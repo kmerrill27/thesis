@@ -40,8 +40,10 @@ class GDBProcess:
 		# Set up logging to file
 		self.process.sendline(SET_LOG_FILE.format(LOG_FILE))
 		self.process.expect(GDB_PROMPT)
+		print self.process.before.strip()
 		self.process.sendline(RUN)
 		self.process.expect(GDB_PROMPT)
+		print self.process.before.strip()
 		self.process.sendline(SET_LOG_ON)
 		self.process.expect(OUTPUT_REDIRECT.format(LOG_FILE))
 		#self.process.sendline(SRC_LINE)
@@ -215,6 +217,21 @@ class GDBProcess:
 		return [frame, line]
 
 		# TODO: Check if finished
+
+	def gdbCheckForReturn():
+		output = self.process.before.strip()
+
+		# Returned with value
+		retval_match = re.search(RETURN_REGEX, output)
+		if retval_match:
+			return [True, retval_match.group(1)]
+
+		# Returned with no value
+		retval_match = re_search(BREAKPOINT_REGEX, output)
+		if retval_match:
+			return [True, None]	
+
+		return [False, None]
 
 	def gdbRun(self):
 		self.resetLogging()
