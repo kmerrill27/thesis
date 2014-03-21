@@ -1,8 +1,6 @@
 
-Breakpoint 1, bin_search (list=0x7fff5fbffa04, lo=0, hi=9, key=4)
-    at bin_search.c:26
-26		if (lo > hi)
-=> 0x0000000100000e05 <bin_search+21>:	8b 45 f4	mov    -0xc(%rbp),%eax
-   0x0000000100000e08 <bin_search+24>:	8b 4d f0	mov    -0x10(%rbp),%ecx
-   0x0000000100000e0b <bin_search+27>:	39 c8	cmp    %ecx,%eax
-   0x0000000100000e0d <bin_search+29>:	7e 0c	jle    0x100000e1b <bin_search+43>
+Breakpoint 1, insert (root=0x0, val=7) at bst.c:48
+48		if (!root)
+=> 0x0000000100000b8f <insert+15>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
+   0x0000000100000b93 <insert+19>:	48 83 f8 00	cmp    $0x0,%rax
+   0x0000000100000b97 <insert+23>:	75 39	jne    0x100000bd2 <insert+82>

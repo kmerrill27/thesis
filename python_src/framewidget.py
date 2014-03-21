@@ -54,10 +54,13 @@ class FrameWindow(QtGui.QWidget):
 
 			self.current_frame = frame
 			self.frame_display = FrameDisplay(frame)
-			self.base_label = QtGui.QLabel()
-			self.base_label.setText("Frame bottom: " + frame.bottom)
 			self.frame.addWidget(self.frame_display, 1)
-			self.frame.addWidget(self.base_label)
+
+			# Check if in main (will be None)
+			if frame.bottom:
+				self.base_label = QtGui.QLabel()
+				self.base_label.setText("Frame bottom: " + frame.bottom)
+				self.frame.addWidget(self.base_label)
 
 	def clear(self):
 		self.removeItem(self.frame_display)

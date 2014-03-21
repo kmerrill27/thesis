@@ -52,11 +52,14 @@ class StackVisualizer(QtGui.QWidget):
 
 	def functionStep(self):
 		print "function"
-		# Check if source loaded
+		# TODO: Check if source loaded?
 		if self.gdb_process.process:
 			[new_frame, src_line] = self.gdb_process.gdbFunctionStep()
-			self.stack_and_frame_widget.addFrame(new_frame)
-			self.source_and_assembly_widget.highlightLine(src_line)
+		else:
+			[new_frame, src_line] = self.gdb_process.gdbInit()
+
+		self.stack_and_frame_widget.addFrame(new_frame)
+		self.source_and_assembly_widget.highlightLine(src_line)
 
 	def run(self):
 		if self.gdb_process.process:
@@ -66,9 +69,9 @@ class StackVisualizer(QtGui.QWidget):
 	def reset(self):
 		# Check if source loaded
 		if self.gdb_process.process:
-			print "reset"
 			self.stack_and_frame_widget.clear()
 			self.source_and_assembly_widget.reset()
+			self.gdb_process.gdbReset()
 
 	def highlightSourceLine(self, line_num):
 		if self.gdb_process.process:

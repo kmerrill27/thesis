@@ -9,6 +9,7 @@ class GDBProcess:
 
 	def __init__(self):
 		self.process = None
+		self.started = False
 
 	# Must reset logging after each log file open
 	# Call after every parse
@@ -43,17 +44,75 @@ class GDBProcess:
 		self.process.expect(GDB_PROMPT)
 		self.process.sendline(SET_LOG_ON)
 		self.process.expect(OUTPUT_REDIRECT.format(LOG_FILE))
+		#self.process.sendline(SRC_LINE)
+		#self.process.expect(GDB_PROMPT)
+
+		#self.process.sendline("continue")
+		#self.process.expect(GDB_PROMPT)
+
+		#line_num = parseLineNum()
+
+		# TODO: Set up initial stack
+		[frame, line] = self.gdbMainSetup()
+		return [frame, line]
+
+		#return line_num
+
+	def gdbMainSetup(self):
 		self.process.sendline(SRC_LINE)
 		self.process.expect(GDB_PROMPT)
 
-		self.process.sendline("continue")
+		self.flushToLogFile()
+		line = parseLineNum()
+		self.resetLogging()
+
+		self.process.sendline(PRINT_REGISTER.format(BASE_POINTER))
 		self.process.expect(GDB_PROMPT)
 
-		line_num = parseLineNum()
+		self.flushToLogFile()
+		[my_ebp] = parseRegisterVals()
+		self.resetLogging()
 
-		# TODO: Set up initial stack
+		frame = StackFrame("main", my_ebp, None, None)
 
-		return line_num
+		self.process.sendline(INFO_ARGS)
+		self.process.expect(GDB_PROMPT)
+
+		self.flushToLogFile()
+		locals_list = parseLocalsList()
+		self.resetLogging()
+
+		self.process.sendline(INFO_SCOPE.format(frame.title))
+		self.process.expect(GDB_PROMPT)
+
+		self.flushToLogFile()
+		symbols = parseSymbols()
+		self.resetLogging()
+
+		for sym in symbols:
+			item = FrameItem(sym.title, hex(int(frame.frame_ptr, 16) + int(sym.addr)), sym.length, None)
+			frame.addItem(item)
+
+			self.process.sendline(PRINT_SYMBOL.format(sym.title))
+			self.process.expect(GDB_PROMPT)
+
+		self.flushToLogFile()
+		sym_vals = parseSymbolVals()
+		self.resetLogging()
+
+		assert(len(symbols) == len(sym_vals))
+
+		for i in range(0, len(symbols)):
+			item = frame.items[len(symbols) - 1 - i]
+			# Locals are intitally null
+			if item.title in locals_list:
+				item.value = UNINITIALIZED
+			else:
+				item.value = sym_vals[i]
+
+		return [frame, line]
+
+		# TODO: Check if finished
 
 	def gdbLineStep(self):
 		self.resetLogging()
@@ -65,11 +124,20 @@ class GDBProcess:
 		# Check if finished
 
 	def gdbFunctionStep(self):
-		self.process.sendline(FUNCTION_STEP)
-		self.process.expect(GDB_PROMPT)
+		if not self.started:
+			self.process.sendline(CONTINUE)
+			self.process.expect(GDB_PROMPT)
+		else:
+			self.process.sendline(FUNCTION_STEP)
+			self.process.expect(GDB_PROMPT)
 
 		self.resetLogging()
 
+		return self.gdbFunctionSetup()
+
+		# TODO: Check if finished
+
+	def gdbFunctionSetup(self):
 		self.process.sendline(INFO_FRAME)
 		self.process.expect(GDB_PROMPT)
 
@@ -87,6 +155,13 @@ class GDBProcess:
 		self.resetLogging()
 
 		frame = StackFrame(title, my_ebp, my_esp, bottom)
+
+		self.process.sendline(INFO_ARGS)
+		self.process.expect(GDB_PROMPT)
+
+		self.flushToLogFile()
+		locals_list = parseLocalsList()
+		self.resetLogging()
 
 		for reg in registers:
 
@@ -117,11 +192,9 @@ class GDBProcess:
 		self.resetLogging()
 
 		for sym in symbols:
-			#item = FrameItem(sym.title, "$ebp+" + sym.addr, sym.bytes, None)
 			item = FrameItem(sym.title, hex(int(frame.frame_ptr, 16) + int(sym.addr)), sym.length, None)
 			frame.addItem(item)
 
-			#self.process.sendline(VAL_AT_ADDR.format(item.bytes, item.addr))
 			self.process.sendline(PRINT_SYMBOL.format(sym.title))
 			self.process.expect(GDB_PROMPT)
 
@@ -132,7 +205,12 @@ class GDBProcess:
 		assert(len(symbols) == len(sym_vals))
 
 		for i in range(0, len(symbols)):
-			frame.items[len(symbols) - 1 - i].value = sym_vals[i]
+			item = frame.items[len(symbols) - 1 - i]
+			# Locals are intitally null
+			if item.title in locals_list:
+				item.value = UNINITIALIZED
+			else:
+				item.value = sym_vals[i]
 
 		return [frame, line]
 
@@ -148,6 +226,7 @@ class GDBProcess:
 		# Get result from log
 
 	def gdbReset(self):
-		self.process.close()
-		self.gdbInit()
+		if self.process:
+			self.process.close()
+			self.process = None
 		# Clear stack

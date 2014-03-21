@@ -61,7 +61,9 @@ class FrameDisplay(QtGui.QTableWidget):
 
 	def updateDisplay(self):
 		sorted_list = sorted(self.frame.items, key=lambda x: x.addr)
-		self.addTempStorageSpace(int(sorted_list[0].addr, 16))
+		# Check if in main
+		if self.frame.stack_ptr != None:
+			self.addTempStorageSpace(int(sorted_list[0].addr, 16))
 		for item in sorted_list:
 			self.displayItem(item)
 
@@ -82,7 +84,9 @@ class FrameDisplay(QtGui.QTableWidget):
 			self.setVerticalHeaderItem(self.rowCount() - 1, header)
 
 			if i == 0:
-				if self.frame.frame_ptr == frame_item.addr:
+				if self.frame.frame_ptr == frame_item.addr and self.frame.stack_ptr == frame_item.addr:
+					self.verticalHeaderItem(self.rowCount() - 1).setText(BASE_POINTER + "/" + STACK_POINTER)
+				elif self.frame.frame_ptr == frame_item.addr:
 					self.verticalHeaderItem(self.rowCount() - 1).setText(BASE_POINTER)
 				elif self.frame.stack_ptr == frame_item.addr:
 					self.verticalHeaderItem(self.rowCount() - 1).setText(STACK_POINTER)

@@ -24,7 +24,8 @@ class SourceWidget(QtGui.QFrame):
 		self.window.highlightLine(int(line_num))
 
 	def reset(self):
-		self.top_bar.prepareVis(None)
+		self.window.unhighlightLines()
+		self.assembly_widget.clear()
 
 class SourceTopBar(QtGui.QWidget):
 
@@ -55,6 +56,7 @@ class SourceTopBar(QtGui.QWidget):
 		if filename:
 			self.current_file.setText(os.path.basename(str(filename)))
 			err = self.source_window.loadSource(str(filename))
+			self.gdb_process.gdbReset()
 
 			if (err > 0):
 				self.prepareVis(str(filename))
@@ -63,10 +65,6 @@ class SourceTopBar(QtGui.QWidget):
 		if (filename):
 			command = C_COMPILE.format(self.formatPath(filename), C_OUT)
 			os.system(command)
-
-		# If no filename, just reset with current out file
-		curr_line = self.gdb_process.gdbInit()
-		self.source_window.highlightLine(int(curr_line))
 
 	def formatPath(self, filename):
 		if (platform.system() == "Windows"):
@@ -91,16 +89,22 @@ class SourceWindow(QtGui.QListWidget):
 			with open(filename) as f:
 				source_lines = [line.rstrip('\n') for line in f]
 			self.addItems(source_lines)
+			self.unhighlightLines()
 			return 1
 		else:
 			self.addItem(NOT_C_SOURCE)
 			return -1
 
 	def highlightLine(self, line_num):
-		self.setCurrentRow(line_num)
+		self.setCurrentRow(line_num-1)
+		self.scrollToItem(self.item(line_num-1))
 		disas(line_num)
 		lines = parseDisas()
 		self.assembly_widget.displayLines(lines)
+
+	def unhighlightLines(self):
+		self.setCurrentRow(-1)
+		self.scrollToItem(self.item(0))
 
 	def isCSource(self, filename):
 		base_file = os.path.basename(filename)

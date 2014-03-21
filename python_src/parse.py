@@ -147,6 +147,20 @@ def parseSymbolVals():
 
 	return vals
 
+def parseLocalsList():
+	locals_list = []
+	lines = readLines()
+
+	for line in lines:
+		var_match = re.match(VAR_REGEX, line)
+		if var_match:
+			var = var_match.group(1)
+			locals_list.append(var)
+
+	clearFile()
+
+	return locals_list
+
 def parseRegisterVals():
 	vals = []
 	lines = readLines()
