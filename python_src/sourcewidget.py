@@ -8,16 +8,15 @@ from runstate import *
 
 class SourceWidget(QtGui.QFrame):
 
-	def __init__(self, gdb_process, stack_and_frame_widget, assembly_widget):
+	def __init__(self, stack_and_frame_widget, assembly_widget):
 		super(SourceWidget, self).__init__()
-		self.gdb_process = gdb_process
 		self.stack_and_frame_widget = stack_and_frame_widget
 		self.assembly_widget = assembly_widget
 		self.initUI()
 
 	def initUI(self):
-		self.window = SourceWindow(self.stack_and_frame_widget, self.assembly_widget)
-		self.top_bar = SourceTopBar(self.gdb_process, self.window)
+		self.window = SourceWindow(self.stack_and_frame_widget)
+		self.top_bar = SourceTopBar(self.assembly_widget, self.window)
 		frameWrapVert(self, [self.top_bar, self.window])
 
 	def highlightLine(self, line_num):
@@ -29,9 +28,9 @@ class SourceWidget(QtGui.QFrame):
 
 class SourceTopBar(QtGui.QWidget):
 
-	def __init__(self, gdb_process, source_window):
+	def __init__(self, assembly_widget, source_window):
 		super(SourceTopBar, self).__init__()
-		self.gdb_process = gdb_process
+		self.assembly_widget = assembly_widget
 		self.source_window = source_window
 		self.initUI()
 
@@ -56,7 +55,7 @@ class SourceTopBar(QtGui.QWidget):
 		if filename:
 			self.current_file.setText(os.path.basename(str(filename)))
 			err = self.source_window.loadSource(str(filename))
-			self.gdb_process.gdbReset()
+			self.assembly_widget.clear()
 
 			if (err > 0):
 				self.prepareVis(str(filename))
@@ -75,15 +74,13 @@ class SourceTopBar(QtGui.QWidget):
 
 class SourceWindow(QtGui.QListWidget):
 
-	def __init__(self, stack_and_frame_widget, assembly_widget):
+	def __init__(self, stack_and_frame_widget):
 		super(SourceWindow, self).__init__()
 		self.stack_and_frame_widget = stack_and_frame_widget
-		self.assembly_widget = assembly_widget
 
 	def loadSource(self, filename):
 		self.clear()
 		self.stack_and_frame_widget.clear()
-		self.assembly_widget.clear()
 
 		if (self.isCSource(filename)):
 			with open(filename) as f:
@@ -98,9 +95,6 @@ class SourceWindow(QtGui.QListWidget):
 	def highlightLine(self, line_num):
 		self.setCurrentRow(line_num-1)
 		self.scrollToItem(self.item(line_num-1))
-		disas(line_num)
-		lines = parseDisas()
-		self.assembly_widget.displayLines(lines)
 
 	def unhighlightLines(self):
 		self.setCurrentRow(-1)

@@ -4,8 +4,9 @@ from framewidget import *
 
 class StackAndFrameWidget(QtGui.QFrame):
 
-	def __init__(self):
+	def __init__(self, gdb_process):
 		super(StackAndFrameWidget, self).__init__()
+		self.gdb_process = gdb_process
 		self.initUI()
 
 	def initUI(self):
@@ -26,3 +27,4 @@ class StackAndFrameWidget(QtGui.QFrame):
 
 	def clear(self):
 		self.stack_widget.clear()
+		self.gdb_process.gdbReset()

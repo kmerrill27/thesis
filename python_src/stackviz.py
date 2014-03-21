@@ -13,8 +13,8 @@ class StackVisualizer(QtGui.QWidget):
 		grid = QtGui.QGridLayout(self)
 
 		self.gdb_process = GDBProcess()
-		self.stack_and_frame_widget = StackAndFrameWidget()
-		self.source_and_assembly_widget = SourceAndAssemblyWidget(self.gdb_process, self.stack_and_frame_widget)
+		self.stack_and_frame_widget = StackAndFrameWidget(self.gdb_process)
+		self.source_and_assembly_widget = SourceAndAssemblyWidget(self.stack_and_frame_widget)
 		self.toolbar = QtGui.QToolBar()
 		self.setupToolbar()
 
@@ -54,12 +54,12 @@ class StackVisualizer(QtGui.QWidget):
 		print "function"
 		# TODO: Check if source loaded?
 		if self.gdb_process.process:
-			[new_frame, src_line] = self.gdb_process.gdbFunctionStep()
+			[new_frame, src_line, assembly] = self.gdb_process.gdbFunctionStep()
 		else:
-			[new_frame, src_line] = self.gdb_process.gdbInit()
+			[new_frame, src_line, assembly] = self.gdb_process.gdbInit()
 
 		self.stack_and_frame_widget.addFrame(new_frame)
-		self.source_and_assembly_widget.highlightLine(src_line)
+		self.source_and_assembly_widget.setLine(src_line, assembly)
 
 	def run(self):
 		if self.gdb_process.process:

@@ -5,172 +5,80 @@ from PyQt4 import QtCore
 
 class SymbolTuple:
 
-	def __init__(self, addr, title, length):
-		self.addr = addr
+	def __init__(self, title, addr, length):
 		self.title = title
+		self.addr = addr
 		self.length = length
 
-def readLines():
-	with open(LOG_FILE) as f:
-		lines = [line.strip() for line in f]
-	return lines
+def parseAssembly(lines):
+	assembly = []
+	split_lines = lines.split('\n')
 
-def readFile():
-	with open(LOG_FILE) as f:
-		lines = f.read().replace('\n', ' ')
-	return lines
+	for i in range(0, len(split_lines)):
+		if split_lines[i].startswith(ASSEMBLY_START):
+			assembly = [line.strip() for line in split_lines[i:]]
+			assembly[0] = assembly[0].replace(ASSEMBLY_START, "").strip()
+			break
 
-def clearFile():
-	os.remove(LOG_FILE)
-	os.open(LOG_FILE, os.O_CREAT)
+	return assembly
 
-def parseDisas():
-	lines = []
-	remaining_lines = []
-	with open(DISAS_OFILE) as f:
-		line = f.readline()
-		while line:
-			# Look for =>, indicating start of assembly code
-			# Assembly code should be the last thing in the file
-			if line.startswith(ASSEMBLY_START):
-				lines.append(line.replace(ASSEMBLY_START, "").strip())
-				remaining_lines = [ln.lstrip().rstrip('\n') for ln in f.readlines()]
-				break
-			line = f.readline()
-	
-	# Must be a QStringList to add to widget - does not support batch append		
-	for line in remaining_lines:
-		lines.append(line)
+def parseLineNum(lines):
+	return regexSearch(LINE_NUM_REGEX, lines)
 
-	return lines
+def parseVal(lines):
+	return regexSearch(ADDR_REGEX, lines)
 
-def parseLineNum():
-	lines = readFile()
+def parseSymbolVal(lines):
+	return regexSearch(PRINT_REGEX, lines)
 
-	line_match = re.match(LINE_NUM_REGEX, lines)
-	line_num = line_match.group(1)
+def parseRegisterVal(lines):
+	return regexSearch(PRINT_REGISTER_REGEX, lines)
 
-	clearFile()
+def parseLocalsList(lines):
+	return regexFindAll(VAR_REGEX, lines)
 
-	return line_num
+def parseFrameInfo(lines):
+	title = regexSearch(FUNCTION_REGEX, lines)
+	line = regexSearch(LINE_REGEX, lines)
+	bottom = regexSearch(BOTTOM_REGEX, lines)
 
-def parsePointers():
-	lines = readLines()
-
-	esp_match = re.match(PTR_REGEX, lines[0])
-	my_esp = esp_match.group(1)
-	ebp_match = re.match(PTR_REGEX, lines[1])
-	my_ebp = ebp_match.group(1)
-
-	clearFile()
-
-	return [my_ebp, my_esp]
-
-def parseFrameInfo():
-	lines = readFile()
-
-	line_match = re.match(LINE_REGEX, lines)
-	line = line_match.group(1)
-
-	bottom_match = re.match(BOTTOM_REGEX, lines)
-	bottom = bottom_match.group(1)
-
-	function_match = re.match(FUNCTION_REGEX, lines)
-	title = function_match.group(1)
-
-	registers = parseSavedRegisters()
-
-	clearFile()
+	registers = parseSavedRegisters(lines)
 
 	return [title, line, bottom, registers]
 
-def parseSavedRegisters():
-	registers = []
-	lines = readFile()
-
-	registers_match = re.match(SAVED_REG_REGEX, lines)
-	register_string = registers_match.group(1)
-	register_list = register_string.split(",")
-
-	for reg_item in register_list:
-		reg_match = re.match(REG_ADDR_REGEX, reg_item.strip())
-		title = reg_match.group(1)
-		addr = reg_match.group(2)
-		# Hard coding for 64-bit machine (registers are 1 byte)
-		reg = SymbolTuple(addr, title, 8)
-		registers.append(reg)
-
-	return registers
-
-def parseVals():
-	vals = []
-	lines = readLines()
-
-	for line in lines:
-		val_match = re.match(ADDR_REGEX, line)
-		if val_match:
-			val = val_match.group(1)
-			vals.append(val)
-
-	clearFile()
-
-	return vals
-
-def parseSymbols():
+def parseSymbols(lines):
 	symbols = []
-	lines = readLines()
+	matches = regexFindAll(SYMBOL_REGEX, lines)
 
-	for line in lines:
-		sym_match = re.match(SYMBOL_REGEX, line)
-		if sym_match:
-			title = sym_match.group(1)
-			addr = sym_match.group(2)
-			length = sym_match.group(3)
-			sym = SymbolTuple(addr, title, length)
-			symbols.append(sym)
-
-	clearFile()
+	for match in matches:
+		symbols.append(SymbolTuple(match[0], match[1], match[2]))
 
 	return symbols
 
-def parseSymbolVals():
-	vals = []
-	lines = readLines()
+def parseSavedRegisters(lines):
+	registers = []
+	matches = regexFindAll(REG_ADDR_REGEX, lines)
 
-	for line in lines:
-		val_match = re.match(PRINT_REGEX, line)
-		if val_match:
-			val = val_match.group(1)
-			vals.append(val)
+	for match in matches:
+		# TODO: fix hard coding for 64-bit machine (registers are 1 byte)
+		registers.append(SymbolTuple(match[0], match[1], 8))
 
-	clearFile()
+	return registers
 
-	return vals
+def regexSearch(regex, lines):
+	match = re.search(regex, lines)
+	if match:
+		return match.group(1)
 
-def parseLocalsList():
-	locals_list = []
-	lines = readLines()
+		# TODO: error handling
+	return -1
 
-	for line in lines:
-		var_match = re.match(VAR_REGEX, line)
-		if var_match:
-			var = var_match.group(1)
-			locals_list.append(var)
+def regexFindAll(regex, lines):
+	match_list = []
 
-	clearFile()
+	matches = re.findall(regex, lines)
+	if matches:
+		for match in matches:
+			match_list.append(match)
 
-	return locals_list
-
-def parseRegisterVals():
-	vals = []
-	lines = readLines()
-
-	for line in lines:
-		val_match = re.match(PRINT_REGISTER_REGEX, line)
-		if val_match:
-			val = val_match.group(1)
-			vals.append(val)
-
-	clearFile()
-
-	return vals
+	return match_list
