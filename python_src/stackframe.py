@@ -1,14 +1,18 @@
 from PyQt4 import QtGui
 from helper import *
 from defs import *
+from arch import *
 
 class StackFrame:
 
-	def __init__(self, title, frame_ptr, stack_ptr, bottom):
+	def __init__(self, title, architecture, frame_ptr, stack_ptr, bottom, line, assembly):
 		self.title = title
+		self.architecture = architecture
 		self.frame_ptr = frame_ptr
 		self.stack_ptr = stack_ptr
 		self.bottom = bottom
+		self.line = line
+		self.assembly = assembly
 		self.items = []
 
 	def addItem(self, frame_item):
@@ -19,11 +23,12 @@ class StackFrame:
 
 class FrameItem:
 
-	def __init__(self, title, addr, length, value):
+	def __init__(self, title, addr, length, value, initialized):
 		self.title = title
 		self.addr = addr
 		self.length = length
 		self.value = value
+		self.initialized = initialized
 
 class FrameDisplay(QtGui.QTableWidget):
 
@@ -38,13 +43,13 @@ class FrameDisplay(QtGui.QTableWidget):
 		self.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
 		self.updateDisplay()
 		self.setMaximumHeight(self.rowCount()*self.rowHeight(0) + 2)
-		#self.stretchRows()
+		self.highlightStackPointer()
 
-	def stretchRows(self):
-		row_size = self.height() / self.rowCount()
-		if row_size > self.rowHeight(0):
-			for i in range(0, self.rowCount()):
-				self.setRowHeight(i, row_size)
+	def highlightStackPointer(self):
+		for i in range(0, self.rowCount()):
+			header_text = self.verticalHeaderItem(i).text()
+			if header_text and self.frame.architecture.stack_pointer in header_text:
+				self.selectRow(i)
 
 	def addTempStorageSpace(self, last_addr):
 		temp_space = (last_addr - int(self.frame.stack_ptr, 16)) / 4
@@ -57,7 +62,7 @@ class FrameDisplay(QtGui.QTableWidget):
 			self.setVerticalHeaderItem(self.rowCount() - 1, header)
 
 			if self.frame.stack_ptr == curr_addr:
-				header.setText(STACK_POINTER)
+				header.setText(self.frame.architecture.stack_pointer)
 
 	def updateDisplay(self):
 		sorted_list = sorted(self.frame.items, key=lambda x: x.addr)
@@ -71,7 +76,10 @@ class FrameDisplay(QtGui.QTableWidget):
 		item_end = QtGui.QLabel()
 		item_end.setText(str(int(frame_item.addr, 16)))
 		item_title = QtGui.QLabel()
-		item_title.setText(" " + frame_item.title + " =\n     " + frame_item.value)
+		if not frame_item.initialized:
+			item_title.setText(" " + frame_item.title + " =\n     " + UNINITIALIZED)
+		else:
+			item_title.setText(" " + frame_item.title + " =\n     " + frame_item.value)
 		item_start = QtGui.QLabel()
 		item_start.setText(str(int(frame_item.addr, 16) + int(frame_item.length)))
 
@@ -85,14 +93,18 @@ class FrameDisplay(QtGui.QTableWidget):
 
 			if i == 0:
 				if self.frame.frame_ptr == frame_item.addr and self.frame.stack_ptr == frame_item.addr:
-					self.verticalHeaderItem(self.rowCount() - 1).setText(BASE_POINTER + "/" + STACK_POINTER)
+					header.setText(self.frame.architecture.base_pointer + "/" + self.frame.architecture.stack_pointer)
 				elif self.frame.frame_ptr == frame_item.addr:
-					self.verticalHeaderItem(self.rowCount() - 1).setText(BASE_POINTER)
+					header.setText(self.frame.architecture.base_pointer)
 				elif self.frame.stack_ptr == frame_item.addr:
-					self.verticalHeaderItem(self.rowCount() - 1).setText(STACK_POINTER)
+					header.setText(self.frame.architecture.stack_pointer)
 
 		new_row = self.rowCount() - row_span
 		self.setCellWidget(new_row, 0, item_title)
 
 		if row_span > 1:
 			self.setSpan(new_row, 0, row_span, 1)
+
+	# Override to disallow user from selecting line
+	def keyPressEvent(self, event):
+		return

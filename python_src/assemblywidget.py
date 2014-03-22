@@ -46,6 +46,10 @@ class AssemblyWindow(QtGui.QListWidget):
 		self.setCurrentRow(line_num)
 
 	# Override to disallow user from selecting line
+	def keyPressEvent(self, event):
+		return
+
+	# Override to disallow user from selecting line
 	def mousePressEvent(self, event):
 		return
 

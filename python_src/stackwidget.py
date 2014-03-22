@@ -16,9 +16,10 @@ class StackTopBar(QtGui.QWidget):
 
 class StackWindow(QtGui.QWidget):
 
-	def __init__(self, frame_widget):
+	def __init__(self, frame_widget, source_and_assembly_widget):
 		super(StackWindow, self).__init__()
 		self.frame_widget = frame_widget
+		self.source_and_assembly_widget = source_and_assembly_widget
 		self.stack = []
 		self.initUI()
 
@@ -36,6 +37,7 @@ class StackWindow(QtGui.QWidget):
 		frame_index = self.stack_box.indexOf(self.button_group.checkedButton())
 		frame_index = len(self.stack) - frame_index - 1
 		self.frame_widget.displayFrame(self.stack[frame_index])
+		self.source_and_assembly_widget.setLine(self.stack[frame_index].line, self.stack[frame_index].assembly)
 
 	def clear(self):
 		self.frame_widget.clear()

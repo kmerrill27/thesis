@@ -13,8 +13,9 @@ class StackVisualizer(QtGui.QWidget):
 		grid = QtGui.QGridLayout(self)
 
 		self.gdb_process = GDBProcess()
-		self.stack_and_frame_widget = StackAndFrameWidget(self.gdb_process)
-		self.source_and_assembly_widget = SourceAndAssemblyWidget(self.stack_and_frame_widget)
+		self.source_and_assembly_widget = SourceAndAssemblyWidget()
+		self.stack_and_frame_widget = StackAndFrameWidget(self.gdb_process, self.source_and_assembly_widget)
+		self.source_and_assembly_widget.setStackAndFrameWidget(self.stack_and_frame_widget)
 		self.toolbar = QtGui.QToolBar()
 		self.setupToolbar()
 
@@ -51,15 +52,17 @@ class StackVisualizer(QtGui.QWidget):
 			print "line"
 
 	def functionStep(self):
-		print "function"
-		# TODO: Check if source loaded?
-		if self.gdb_process.process:
-			[new_frame, src_line, assembly] = self.gdb_process.gdbFunctionStep()
-		else:
-			[new_frame, src_line, assembly] = self.gdb_process.gdbInit()
+		new_frame = None
 
-		self.stack_and_frame_widget.addFrame(new_frame)
-		self.source_and_assembly_widget.setLine(src_line, assembly)
+		if self.gdb_process.process:
+			new_frame = self.gdb_process.gdbFunctionStep()
+			self.gdb_process.gdbUpdateFrame(self.stack_and_frame_widget.getCurrentFrame())
+		elif self.source_and_assembly_widget.isSource():
+			new_frame = self.gdb_process.gdbInit()
+
+		if new_frame:
+			self.stack_and_frame_widget.addFrame(new_frame)
+			self.source_and_assembly_widget.setLine(new_frame.line, new_frame.assembly)
 
 	def run(self):
 		if self.gdb_process.process:
@@ -67,7 +70,6 @@ class StackVisualizer(QtGui.QWidget):
 			print "run"
 
 	def reset(self):
-		# Check if source loaded
 		if self.gdb_process.process:
 			self.stack_and_frame_widget.clear()
 			self.source_and_assembly_widget.reset()

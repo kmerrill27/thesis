@@ -18,6 +18,9 @@ class FrameWidget(QtGui.QFrame):
 	def displayFrame(self, frame):
 		self.window.displayFrame(frame)
 
+	def getCurrentFrame(self):
+		return self.window.current_frame
+
 class FrameTopBar(QtGui.QWidget):
 
 	def __init__(self):
@@ -47,7 +50,6 @@ class FrameWindow(QtGui.QWidget):
 		self.setLayout(self.frame)
 
 	def displayFrame(self, frame):
-		self.frame.removeWidget
 		if frame != self.current_frame:
 			if self.frame_display != None:
 				self.clear()

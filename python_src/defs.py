@@ -8,6 +8,7 @@ ASSEMBLY_START = "=>"
 UNINITIALIZED = "null"
 CALLEE_SAVED = "Callee"
 RETURN_ADDRESS = "Return address"
+ASSEMBLER_DUMP = "End of assembler dump."
 
 INIT_FILE = "./../gdb/init.gdb"
 
@@ -30,17 +31,21 @@ VAL_AT_ADDR = "x/{0}x {1}"
 INFO_SCOPE = "info scope {0}"
 SRC_LINE = "info line"
 INFO_FRAME = "info frame"
-INFO_ARGS = "info locals"
+INFO_LOCALS = "info locals"
+INFO_TARGET = "info target"
 REG_VAL = "x/x ${0}"
 PRINT_SYMBOL = "print {0}"
 PRINT_REGISTER = "print ${0}"
+LAST_FRAME = "up"
+NEXT_FRAME = "down"
+DISAS = "disassemble {0}, {1}"
 
-BASE_POINTER = "rbp"
-STACK_POINTER = "rsp"
-BASE_POINTERS = ["rbp", "ebp"]
-STACK_POINTERS = ["rip", "eip"]
+BASE_POINTERS = ["ebp", "rbp"]
+STACK_POINTERS = ["esp", "rsp"]
+INSTR_POINTERS = ["eip", "rip"]
 
-VAR_REGEX = "([a-zA-Z0-9_-]*)\s=\s"
+ARCH_REGEX = "file type mach-o-x86-([0-9]*)"
+LOCAL_REGEX = "([a-zA-Z0-9_-]*)\s=\s(.*\s*)"
 PTR_REGEX = "([0-9a-zA-Z]+):\s.*"
 ADDR_REGEX = "[0-9a-zA-Z]+:\s(.*)"
 LEVEL_REGEX = ".*[.|\s]*Stack level ([0-9])+"
@@ -51,7 +56,9 @@ SAVED_REG_REGEX = ".*Saved registers:\s*(.*)"
 REG_ADDR_REGEX = "\s([a-zA-Z]{3})\sat\s(0x[0-9a-zA-Z]*)"
 SYMBOL_REGEX = "Symbol\s([0-9a-zA-Z_-]*).*offset\s0\+([-|0-9]*),\slength\s([0-9]*)"
 LINE_NUM_REGEX = "Line\s([0-9]*)"
+LINE_NUM_AND_ASSEMBLY_REGEX = "Line\s([0-9]*).*starts at address ([0-9a-zA-Z]*).*\s*and ends at ([0-9a-zA-Z]*)"
 PRINT_REGEX = "[0-9]*\s=\s(.*)"
+PRINT_SAVED_REGISTER_REGEX = "\$[0-9]*\s=\s(\(void.*)"
 PRINT_REGISTER_REGEX = "[0-9]*\s=\s\(void \*\)\s(.*)"
 RETURN_REGEX = "Value\sreturned\sis\s\$[0-9]*\s=\s([0-9a-zA-Z]*)"
 BREAKPOINT_REGEX = "Breakpoint [0-9]*,"
