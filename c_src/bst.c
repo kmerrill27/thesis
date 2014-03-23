@@ -25,7 +25,7 @@ int main(void)
 	struct node *root = NULL;
 
 	int i;
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < 5; i++)
 	{
 		root = insert(root, rand() % 25);
 	}

@@ -55,6 +55,8 @@ class StackWindow(QtGui.QWidget):
 			not_on_last_frame = self.removeFrame()
 
 	def addFrame(self, frame):
+		self.frame_widget.clearBoxes()
+
 		frame_button = QtGui.QPushButton(frame.title)
 		frame_button.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
 		frame_button.setCheckable(True)

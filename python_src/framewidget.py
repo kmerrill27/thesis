@@ -26,9 +26,12 @@ class FrameWidget(QtGui.QFrame):
 		self.retval_box.setText(PROGRAM_FINISHED.format(exit_status))
 		self.window.updateFrameDisplay(frame)
 
-	def clear(self):
+	def clearBoxes(self):
 		self.retval_box.clear()
 		self.addr_box.clear()
+
+	def clear(self):
+		self.clearBoxes()
 		self.window.clear()
 
 	def displayFrame(self, frame):

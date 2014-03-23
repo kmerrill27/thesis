@@ -97,6 +97,16 @@ def parseSavedRegisters(lines, reg_length):
 
 	return registers
 
+def parseHitBreakpointNum(lines):
+	return regexSearch(BREAKPOINT_HIT_REGEX, lines)
+
+def parseSetBreakpointNum(lines):
+	return regexSearch(BREAKPOINT_NUM_REGEX, lines)
+
+def parseInMainCheck(lines):
+	# Returns none if not in main
+	return re.search(IN_MAIN, lines)
+
 def parseReturnCheck(lines):
 	retval = regexSearch(RETURN_REGEX, lines)
 	# Returned with value

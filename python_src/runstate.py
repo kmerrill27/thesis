@@ -12,13 +12,15 @@ class GDBProcess:
 		self.process = None
 		self.architecture = None
 		self.started = False
+		self.mainBreakpoint = -1
+		self.empty_frame = StackFrame(None, None, None, None, None, None, None)
 
 	def gdbInit(self):
 		# Open child bash process
 		self.started = False
 		return self.startProcess()
 
-	def gdbFinishMain(self):
+	def setMainBreakpoint(self):
 		self.process.sendline(DISAS_MAIN)
 		while (True):
 			i = self.process.expect([GDB_PROMPT, RETURN_TO_CONTINUE])
@@ -32,8 +34,7 @@ class GDBProcess:
 
 		self.process.sendline(BREAK_ADDR.format(pop_addr))
 		self.process.expect(GDB_PROMPT)
-		self.process.sendline(CONTINUE)
-		self.process.expect(GDB_PROMPT)
+		self.mainBreakpoint = parseSetBreakpointNum(self.process.before.strip())
 
 	def gdbFinishUp(self):
 		self.process.sendline(CONTINUE)
@@ -53,22 +54,32 @@ class GDBProcess:
 			self.process.sendline(CONTINUE)
 			self.process.expect(GDB_PROMPT)
 		else:
-			# TODO: check if in main and are more function calls to be had (continue)
 			self.process.sendline(FUNCTION_STEP)
 			self.process.expect(GDB_PROMPT)
 
-		[returned, val] = parseReturnCheck(self.process.before.strip())
+			if parseInMainCheck(self.process.before.strip()):
+				print "in main"
+				self.process.sendline(CONTINUE)
+				self.process.expect(GDB_PROMPT)
+				if self.mainBreakpoint == parseHitBreakpointNum(self.process.before.strip()):
+					print "hit main breakpoint"
+					return [self.empty_frame, None]
+			else:
+				[returned, val] = parseReturnCheck(self.process.before.strip())
 
-		if returned:
-			return [None, val]
+				if returned:
+					print "returned"
+					return [None, val]
 
+		print "adding frame"
 		return [self.functionSetup(self.process.before.strip()), None]
 
 	def gdbRun(self):
 		self.process.sendline(REMOVE_BR)
 		self.process.expect(GDB_PROMPT)
-
-		self.gdbFinishMain()
+		self.setMainBreakpoint()
+		self.process.sendline(CONTINUE)
+		self.process.expect(GDB_PROMPT)
 
 	def gdbReset(self):
 		if self.process:
@@ -76,6 +87,7 @@ class GDBProcess:
 			self.process = None
 
 	def gdbUpdateCurrentFrame(self, frame):
+		print "update current frame"
 		[line, assembly] = self.getLineAndAssembly()
 
 		my_esp = self.getRegisterAddress(self.architecture.stack_pointer)
@@ -150,6 +162,7 @@ class GDBProcess:
 
 		# TODO: check if unsupported architecture
 		self.setArchitecture()
+		self.setMainBreakpoint()
 
 		self.process.sendline(RUN)
 		self.process.expect(GDB_PROMPT)
@@ -165,8 +178,10 @@ class GDBProcess:
 		self.architecture.setArchitecture(int(bits))
 
 	def getLineAndAssembly(self):
+		print "getLineAndAssembly"
 		self.process.sendline(SRC_LINE)
 		self.process.expect(GDB_PROMPT)
+		print self.process.before.strip()
 		[line, assembly_start, assembly_end] = parseLineAndAssembly(self.process.before.strip())
 		self.process.sendline(DISAS.format(assembly_start, assembly_end))
 		self.process.expect(GDB_PROMPT)
