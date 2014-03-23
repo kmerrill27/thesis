@@ -32,9 +32,10 @@ class FrameItem:
 
 class FrameDisplay(QtGui.QTableWidget):
 
-	def __init__(self, frame):
+	def __init__(self, frame, addr_box):
 		super(FrameDisplay, self).__init__()
 		self.frame = frame
+		self.addr_box = addr_box
 		self.initUI()
 
 	def initUI(self):
@@ -105,6 +106,6 @@ class FrameDisplay(QtGui.QTableWidget):
 		if row_span > 1:
 			self.setSpan(new_row, 0, row_span, 1)
 
-	# Override to disallow user from selecting line
-	def keyPressEvent(self, event):
-		return
+	def selectionChanged(self, selected, deselected):
+		row = selected.indexes()[0].row()
+		self.addr_box.setText(self.verticalHeaderItem(row).toolTip())

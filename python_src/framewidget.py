@@ -9,10 +9,26 @@ class FrameWidget(QtGui.QFrame):
 
 	def initUI(self):
 		self.top_bar = FrameTopBar()
-		self.window = FrameWindow()
-		frameWrapVert(self, [self.top_bar, self.window])
+		self.retval_box = QtGui.QLineEdit()
+		self.retval_box.setReadOnly(True)
+		self.addr_box = QtGui.QLineEdit()
+		self.addr_box.setReadOnly(True)
+		self.window = FrameWindow(self.addr_box)
+		frameWrapVert(self, [self.top_bar, self.retval_box, self.addr_box, self.window])
+
+	def returned(self, retval):
+		if retval:
+			self.retval_box.setText(RETURNED_WITH.format(retval))
+		else:
+			self.retval_box.setText(RETURNED_VOID)
+
+	def finish(self, exit_status, frame):
+		self.retval_box.setText(PROGRAM_FINISHED.format(exit_status))
+		self.window.updateFrameDisplay(frame)
 
 	def clear(self):
+		self.retval_box.clear()
+		self.addr_box.clear()
 		self.window.clear()
 
 	def displayFrame(self, frame):
@@ -37,9 +53,10 @@ class FrameTopBar(QtGui.QWidget):
 
 class FrameWindow(QtGui.QWidget):
 
-	def __init__(self):
+	def __init__(self, addr_box):
 		super(FrameWindow, self).__init__()
 		self.initUI()
+		self.addr_box = addr_box
 		self.current_frame = None
 		self.frame_display = None
 		self.base_label = None
@@ -49,13 +66,17 @@ class FrameWindow(QtGui.QWidget):
 		self.frame.addStretch()
 		self.setLayout(self.frame)
 
+	def updateFrameDisplay(self, frame):
+		self.current_frame = None
+		self.displayFrame(frame)
+
 	def displayFrame(self, frame):
 		if frame != self.current_frame:
 			if self.frame_display != None:
 				self.clear()
 
 			self.current_frame = frame
-			self.frame_display = FrameDisplay(frame)
+			self.frame_display = FrameDisplay(frame, self.addr_box)
 			self.frame.addWidget(self.frame_display, 1)
 
 			# Check if in main (will be None)
@@ -67,9 +88,11 @@ class FrameWindow(QtGui.QWidget):
 	def clear(self):
 		self.removeItem(self.frame_display)
 		self.removeItem(self.base_label)
+		self.addr_box.clear()
 
 		self.frame_display = None
 		self.base_label = None
+		self.current_frame = None
 
 	def removeItem(self, item):
 		if item:

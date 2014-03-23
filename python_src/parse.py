@@ -10,7 +10,7 @@ class SymbolTuple:
 		self.addr = addr
 		self.length = length
 
-class LocalTuple:
+class VarTuple:
 
 	def __init__(self, title, value):
 		self.title = title
@@ -30,6 +30,12 @@ def parseAssembly(lines):
 
 def parseArchitecture(lines):
 	return regexSearch(ARCH_REGEX, lines)
+
+def parsePopAddress(lines):
+	return regexSearch(POP_ADDR_REGEX, lines)
+
+def parseExitCode(lines):
+	return regexSearch(EXIT_REGEX, lines)
 
 def parseLineAndAssembly(lines):
 	match = re.search(LINE_NUM_AND_ASSEMBLY_REGEX, lines)
@@ -55,14 +61,14 @@ def parseSavedRegisterVal(lines):
 def parseRegisterVal(lines):
 	return regexSearch(PRINT_REGISTER_REGEX, lines)
 
-def parseLocalsList(lines):
-	locals_list = []
-	print lines
-	matches = regexFindAll(LOCAL_REGEX, lines)
-	for match in matches:
-		locals_list.append(LocalTuple(match[0], match[1]))
+def parseVarList(lines):
+	var_list = []
 
-	return locals_list
+	matches = regexFindAll(VAR_REGEX, lines)
+	for match in matches:
+		var_list.append(VarTuple(match[0], match[1]))
+
+	return var_list
 
 def parseFrameInfo(lines, reg_length):
 	title = regexSearch(FUNCTION_REGEX, lines)
@@ -92,19 +98,18 @@ def parseSavedRegisters(lines, reg_length):
 	return registers
 
 def parseReturnCheck(lines):
-	# TODO: FIX THIS
-	print lines
 	retval = regexSearch(RETURN_REGEX, lines)
 	# Returned with value
 	if retval:
 		return [True, retval]
 
-	returned = re.search(BREAKPOINT_REGEX, lines)
-	# Returned with no value
-	if returned:
-		return [True, None]	
+	hitBreakpoint = re.search(BREAKPOINT_REGEX, lines)
+	# Did not return
+	if hitBreakpoint:
+		return [False, None]	
 
-	return [False, None]
+	# Returned with no value
+	return [True, None]
 
 def regexSearch(regex, lines):
 	match = re.search(regex, lines)

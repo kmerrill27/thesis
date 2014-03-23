@@ -16,18 +16,29 @@ class GDBProcess:
 	def gdbInit(self):
 		# Open child bash process
 		self.started = False
-		self.process = pexpect.spawn('bash')
-		self.process.expect(BASH_PROMPT)
-		self.process.sendline(GDB_INIT_CMD.format(INIT_FILE, C_OUT))
+		return self.startProcess()
+
+	def gdbFinishMain(self):
+		self.process.sendline(DISAS_MAIN)
+		while (True):
+			i = self.process.expect([GDB_PROMPT, RETURN_TO_CONTINUE])
+			if i == 1:
+				self.process.sendline("")
+			else:
+				break
+
+		# Get address of right before main exit
+		pop_addr = parsePopAddress(self.process.before.strip())
+
+		self.process.sendline(BREAK_ADDR.format(pop_addr))
+		self.process.expect(GDB_PROMPT)
+		self.process.sendline(CONTINUE)
 		self.process.expect(GDB_PROMPT)
 
-		# TODO: check if unsupported architecture
-		self.setArchitecture()
-
-		self.process.sendline(RUN)
+	def gdbFinishUp(self):
+		self.process.sendline(CONTINUE)
 		self.process.expect(GDB_PROMPT)
-
-		return self.mainSetup(self.process.before.strip())
+		return parseExitCode(self.process.before.strip())
 
 	def gdbLineStep(self):
 		self.process.sendline(LINE_STEP)
@@ -38,41 +49,41 @@ class GDBProcess:
 
 	def gdbFunctionStep(self):
 		if not self.started:
+			self.started = True
 			self.process.sendline(CONTINUE)
 			self.process.expect(GDB_PROMPT)
 		else:
+			# TODO: check if in main and are more function calls to be had (continue)
 			self.process.sendline(FUNCTION_STEP)
 			self.process.expect(GDB_PROMPT)
 
-		# Check if returned
-		#[returned, retval] = parseReturnCheck(self.process.before.strip())
-		return self.functionSetup(self.process.before.strip())
+		[returned, val] = parseReturnCheck(self.process.before.strip())
+
+		if returned:
+			return [None, val]
+
+		return [self.functionSetup(self.process.before.strip()), None]
 
 	def gdbRun(self):
 		self.process.sendline(REMOVE_BR)
 		self.process.expect(GDB_PROMPT)
-		self.process.sendline(CONTINUE)
-		self.process.expect(GDB_PROMPT)
-		# Get result
+
+		self.gdbFinishMain()
 
 	def gdbReset(self):
 		if self.process:
 			self.process.close()
 			self.process = None
 
-	def gdbUpdateFrame(self, frame):
-		self.process.sendline(LAST_FRAME)
-		self.process.expect(GDB_PROMPT)
-
+	def gdbUpdateCurrentFrame(self, frame):
 		[line, assembly] = self.getLineAndAssembly()
 
 		my_esp = self.getRegisterAddress(self.architecture.stack_pointer)
 
-		self.process.sendline(INFO_LOCALS)
-		self.process.expect(GDB_PROMPT)
-		locals_list = parseLocalsList(self.process.before.strip())
+		locals_list = self.getLocalVars()
+		args_list = self.getArgs()
 
-		# Update values of local variables
+		# Update values of variables
 		for item in frame.items:
 			for local in locals_list:
 				if item.title == local.title and item.value != local.value:
@@ -80,9 +91,21 @@ class GDBProcess:
 					if not item.initialized:
 						item.initialized = True
 
+			for arg in args_list:
+				if item.title == arg.title and item.value != arg.value:
+					item.value = arg.value
+
 		frame.line = line
 		frame.assembly = assembly
 		frame.stack_pointer = my_esp
+
+		return frame
+
+	def gdbUpdateFrame(self, frame):
+		self.process.sendline(LAST_FRAME)
+		self.process.expect(GDB_PROMPT)
+
+		self.gdbUpdateCurrentFrame(frame)
 
 		self.process.sendline(NEXT_FRAME)
 		self.process.expect(GDB_PROMPT)
@@ -117,8 +140,21 @@ class GDBProcess:
 		self.addSavedRegisters(frame, registers)
 		self.addSymbols(frame, locals_list)
 
-		# TODO: Check if finished
 		return frame
+
+	def startProcess(self):
+		self.process = pexpect.spawn('bash')
+		self.process.expect(BASH_PROMPT)
+		self.process.sendline(GDB_INIT_CMD.format(INIT_FILE, C_OUT))
+		self.process.expect(GDB_PROMPT)
+
+		# TODO: check if unsupported architecture
+		self.setArchitecture()
+
+		self.process.sendline(RUN)
+		self.process.expect(GDB_PROMPT)
+
+		return self.mainSetup(self.process.before.strip())
 
 	def setArchitecture(self):
 		self.process.sendline(INFO_TARGET)
@@ -147,10 +183,15 @@ class GDBProcess:
 		self.process.expect(GDB_PROMPT)
 		return parseFrameInfo(self.process.before.strip(), self.architecture.reg_length)
 
+	def getArgs(self):
+		self.process.sendline(INFO_ARGS)
+		self.process.expect(GDB_PROMPT)
+		return parseVarList(self.process.before.strip())
+
 	def getLocalVars(self):
 		self.process.sendline(INFO_LOCALS)
 		self.process.expect(GDB_PROMPT)
-		return parseLocalsList(self.process.before.strip())
+		return parseVarList(self.process.before.strip())
 
 	def getSymbol(self, sym):
 		self.process.sendline(PRINT_SYMBOL.format(sym.title))

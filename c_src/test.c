@@ -14,7 +14,8 @@
  	factorial(n);
  	printf("factorial(%d)\n", n);
 
- 	return 0;
+	// return comment
+ 	return 1;
  }
 
  void factorial(int n)

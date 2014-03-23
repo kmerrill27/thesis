@@ -25,13 +25,13 @@ int bin_search(int list[], int lo, int hi, int key)
 
 	if (lo > hi)
 	{
-		return 0;
+		return -1;
 	}
 
 	mid = (lo + hi) / 2;
 	if (list[mid] == key)
 	{
-		return 1;
+		return mid;
 	}
 	else if (list[mid] > key)
 	{

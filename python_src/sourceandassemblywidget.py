@@ -22,8 +22,9 @@ class SourceAndAssemblyWidget(QtGui.QFrame):
 		self.source_widget.highlightLine(line_num)
 		self.assembly_widget.displayLines(assembly)
 
-	def reset(self):
-		self.source_widget.reset()
+	def clear(self):
+		self.source_widget.clear()
+		self.assembly_widget.clear()
 
 	def isSource(self):
 		return self.source_widget.window.isSource

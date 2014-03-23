@@ -49,6 +49,11 @@ class StackWindow(QtGui.QWidget):
 			self.stack_box.takeAt(i)
 		self.stack = []
 
+	def setToMainFrame(self):
+		not_on_last_frame = True
+		while (not_on_last_frame):
+			not_on_last_frame = self.removeFrame()
+
 	def addFrame(self, frame):
 		frame_button = QtGui.QPushButton(frame.title)
 		frame_button.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
@@ -66,7 +71,7 @@ class StackWindow(QtGui.QWidget):
 	def removeFrame(self):
 		assert len(self.stack) == self.stack_box.count()-1
 
-		if len(self.stack) > 0:
+		if len(self.stack) > 1:
 			# Top frame was the active frame
 			was_checked = self.removeButton(self.stack_box.itemAt(0).widget())
 			self.stack.pop()
@@ -75,6 +80,11 @@ class StackWindow(QtGui.QWidget):
 			if len(self.stack) > 0 and was_checked:
 				self.stack_box.itemAt(0).widget().setChecked(True)
 				self.frameSelected()
+
+			return True
+
+		# Return false if on last frame
+		return False
 
 	def removeButton(self, button):
 		was_checked = button == self.button_group.checkedButton()

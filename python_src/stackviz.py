@@ -55,26 +55,40 @@ class StackVisualizer(QtGui.QWidget):
 		new_frame = None
 
 		if self.gdb_process.process:
-			new_frame = self.gdb_process.gdbFunctionStep()
-			self.gdb_process.gdbUpdateFrame(self.stack_and_frame_widget.getCurrentFrame())
-		elif self.source_and_assembly_widget.isSource():
+			[new_frame, retval] = self.gdb_process.gdbFunctionStep()
+			if new_frame:
+				self.gdb_process.gdbUpdateFrame(self.stack_and_frame_widget.getCurrentFrame())
+				self.source_and_assembly_widget.setLine(new_frame.line, new_frame.assembly)
+		elif self.source_and_assembly_widget.isSource() and self.reset:
 			new_frame = self.gdb_process.gdbInit()
 
 		if new_frame:
 			self.stack_and_frame_widget.addFrame(new_frame)
-			self.source_and_assembly_widget.setLine(new_frame.line, new_frame.assembly)
+		else:
+			if self.stack_and_frame_widget.removeFrame():
+				self.stack_and_frame_widget.returned(retval)
+			elif not self.stack_and_frame_widget.finished:
+				# On last frame (main)
+				self.gdb_process.gdbFinishMain()
+				self.finish()
 
 	def run(self):
-		if self.gdb_process.process:
+		if not self.stack_and_frame_widget.finished:
+			if self.gdb_process.process:
+				self.stack_and_frame_widget.setToMainFrame()
+			else:
+				new_frame = self.gdb_process.startProcess()
+				self.stack_and_frame_widget.addFrame(new_frame)
+
 			self.gdb_process.gdbRun()
-			print "run"
+			self.finish()
 
 	def reset(self):
-		if self.gdb_process.process:
-			self.stack_and_frame_widget.clear()
-			self.source_and_assembly_widget.reset()
-			self.gdb_process.gdbReset()
+		self.stack_and_frame_widget.reset()
+		self.source_and_assembly_widget.clear()
 
-	def highlightSourceLine(self, line_num):
-		if self.gdb_process.process:
-			self.source_window.highlightLine(line_num)
+	def finish(self):
+			frame = self.gdb_process.gdbUpdateCurrentFrame(self.stack_and_frame_widget.getCurrentFrame())
+			self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
+			exit_status = self.gdb_process.gdbFinishUp()
+			self.stack_and_frame_widget.finish(exit_status, frame)

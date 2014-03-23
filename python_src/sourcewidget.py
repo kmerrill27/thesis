@@ -24,9 +24,8 @@ class SourceWidget(QtGui.QFrame):
 	def highlightLine(self, line_num):
 		self.window.highlightLine(int(line_num))
 
-	def reset(self):
+	def clear(self):
 		self.window.unhighlightLines()
-		self.assembly_widget.clear()
 
 class SourceTopBar(QtGui.QWidget):
 
@@ -62,7 +61,7 @@ class SourceTopBar(QtGui.QWidget):
 			self.current_file.setText(os.path.basename(str(filename)))
 			err = self.source_window.loadSource(str(filename))
 			self.assembly_widget.clear()
-			self.stack_and_frame_widget.clear()
+			self.stack_and_frame_widget.reset()
 
 			if (err > 0):
 				self.prepareVis(str(filename))
