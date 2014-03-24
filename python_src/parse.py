@@ -18,7 +18,7 @@ class VarTuple:
 
 def parseAssembly(lines):
 	assembly = []
-	split_lines = lines.replace(ASSEMBLER_DUMP, "").split('\n')
+	split_lines = lines.replace(ASSEMBLER_DUMP, "").strip().split('\n')
 
 	for i in range(0, len(split_lines)):
 		if split_lines[i].startswith(ASSEMBLY_START):
@@ -96,6 +96,9 @@ def parseSavedRegisters(lines, reg_length):
 		registers.append(SymbolTuple(match[0], match[1], reg_length))
 
 	return registers
+
+def parseReturnAddress(addr):
+	return regexSearch(RETURN_ADDRESS_REGEX, addr)
 
 def parseHitBreakpointNum(lines):
 	return regexSearch(BREAKPOINT_HIT_REGEX, lines)

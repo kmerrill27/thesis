@@ -12,11 +12,12 @@ PROGRAM_FINISHED = "Program exited {0}."
 RETURNED_VOID = "Function returned void."
 RETURNED_WITH = "Function returned {0}."
 ASSEMBLER_DUMP = "End of assembler dump."
+DUMP_OF_ASSEMBLY = "Dump of assembler code from"
 
 INIT_FILE = "./../gdb/init.gdb"
 
 NOT_C_SOURCE = "ERROR: not a C source file"
-TITLE = "StackViz"
+TITLE = "StackExplorer"
 ARROW_ICON = "./../static/arrow.png"
 STACK_ICON = "./../static/stack.png"
 
@@ -74,3 +75,4 @@ BREAKPOINT_HIT_REGEX = "Breakpoint ([0-9]*),"
 EXIT_REGEX = "exited (.*)]"
 POP_ADDR_REGEX = "([0-9a-zA-Z]*)\s<.*>:\spop.*\s.*retq"
 BREAKPOINT_NUM_REGEX = "Breakpoint\s([0-9]*)\sat"
+RETURN_ADDRESS_REGEX = "\s(0x[0-9a-zA-Z]*)\s"

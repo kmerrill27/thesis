@@ -54,19 +54,15 @@ class StackVisualizer(QtGui.QWidget):
 	def functionStep(self):
 
 		[new_frame, retval] = self.getNextFrame()
-		print "after next frame"
 
 		if new_frame and new_frame != self.gdb_process.empty_frame:
-			print "viz stepped into function"
 			# Stepped into function
 			self.source_and_assembly_widget.setLine(new_frame.line, new_frame.assembly)
 			self.stack_and_frame_widget.addFrame(new_frame)
 		elif not self.stack_and_frame_widget.finished and new_frame == self.gdb_process.empty_frame:
-			print "viz finished main"
 			# No more function calls - hit return breakpoint in main
 			self.finish()
 		elif not self.stack_and_frame_widget.finished:
-			print "viz returned from function"
 			# Returned from function
 			self.stack_and_frame_widget.returned(retval)
 			self.stack_and_frame_widget.removeFrame()
@@ -92,7 +88,7 @@ class StackVisualizer(QtGui.QWidget):
 			[new_frame, retval] = self.gdb_process.gdbFunctionStep()
 			if new_frame and new_frame != self.gdb_process.empty_frame:
 				# "Run" previous frame on stack to function call
-				self.gdb_process.gdbUpdateFrame(self.stack_and_frame_widget.getCurrentFrame())
+				self.gdb_process.gdbUpdateFrame(self.stack_and_frame_widget.getTopFrame())
 		elif self.source_and_assembly_widget.isSource() and self.reset:
 			# Start program
 			return [self.gdb_process.gdbInit(), None]
@@ -100,7 +96,6 @@ class StackVisualizer(QtGui.QWidget):
 		return [new_frame, retval]
 
 	def finish(self):
-			print "finish"
 			frame = self.gdb_process.gdbUpdateCurrentFrame(self.stack_and_frame_widget.getCurrentFrame())
 			self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
 			exit_status = self.gdb_process.gdbFinishUp()

@@ -58,20 +58,16 @@ class GDBProcess:
 			self.process.expect(GDB_PROMPT)
 
 			if parseInMainCheck(self.process.before.strip()):
-				print "in main"
 				self.process.sendline(CONTINUE)
 				self.process.expect(GDB_PROMPT)
 				if self.mainBreakpoint == parseHitBreakpointNum(self.process.before.strip()):
-					print "hit main breakpoint"
 					return [self.empty_frame, None]
 			else:
 				[returned, val] = parseReturnCheck(self.process.before.strip())
 
 				if returned:
-					print "returned"
 					return [None, val]
 
-		print "adding frame"
 		return [self.functionSetup(self.process.before.strip()), None]
 
 	def gdbRun(self):
@@ -87,7 +83,6 @@ class GDBProcess:
 			self.process = None
 
 	def gdbUpdateCurrentFrame(self, frame):
-		print "update current frame"
 		[line, assembly] = self.getLineAndAssembly()
 
 		my_esp = self.getRegisterAddress(self.architecture.stack_pointer)
@@ -178,12 +173,11 @@ class GDBProcess:
 		self.architecture.setArchitecture(int(bits))
 
 	def getLineAndAssembly(self):
-		print "getLineAndAssembly"
 		self.process.sendline(SRC_LINE)
 		self.process.expect(GDB_PROMPT)
-		print self.process.before.strip()
 		[line, assembly_start, assembly_end] = parseLineAndAssembly(self.process.before.strip())
-		self.process.sendline(DISAS.format(assembly_start, assembly_end))
+		# Add one to address so inclusive of add instruction
+		self.process.sendline(DISAS.format(assembly_start, hex(int(assembly_end, 16)+1)))
 		self.process.expect(GDB_PROMPT)
 		assembly = parseAssembly(self.process.before.strip())
 		return [line, assembly]

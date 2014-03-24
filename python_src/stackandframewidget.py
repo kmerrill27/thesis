@@ -46,5 +46,8 @@ class StackAndFrameWidget(QtGui.QFrame):
 	def setToMainFrame(self):
 		self.stack_widget.setToMainFrame()
 
+	def getTopFrame(self):
+		return self.stack_widget.getTopFrame()
+
 	def getCurrentFrame(self):
 		return self.frame_widget.getCurrentFrame()
