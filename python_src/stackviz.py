@@ -48,7 +48,7 @@ class StackVisualizer(QtGui.QWidget):
 		self.toolbar.addWidget(spacer)
 
 	def lineStep(self):
-		if self.source_and_assembly_widget.isSource():
+		if not self.stack_and_frame_widget.finished and self.source_and_assembly_widget.isSource():
 
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
@@ -57,20 +57,20 @@ class StackVisualizer(QtGui.QWidget):
 			QtGui.QApplication.restoreOverrideCursor()
 
 	def functionStep(self):
-		if self.source_and_assembly_widget.isSource():
+		if not self.stack_and_frame_widget.finished and self.source_and_assembly_widget.isSource():
 
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
 			[new_frame, retval] = self.getNextFrame()
 
-			if new_frame and new_frame != self.gdb_process.empty_frame:
+			if self.gdb_process.returningFromMain(new_frame):
+				# No more function calls - hit return breakpoint in main
+				self.finish()
+			elif new_frame:
 				# Stepped into function
 				self.source_and_assembly_widget.setLine(new_frame.line, new_frame.assembly)
 				self.stack_and_frame_widget.addFrame(new_frame)
-			elif not self.stack_and_frame_widget.finished and new_frame == self.gdb_process.empty_frame:
-				# No more function calls - hit return breakpoint in main
-				self.finish()
-			elif not self.stack_and_frame_widget.finished:
+			else:
 				# Returned from function
 				self.stack_and_frame_widget.returned(retval)
 				self.stack_and_frame_widget.removeFrame()
@@ -105,7 +105,7 @@ class StackVisualizer(QtGui.QWidget):
 		if self.gdb_process.process:
 			# Program has already started
 			[new_frame, retval] = self.gdb_process.gdbFunctionStep()
-			if new_frame and new_frame != self.gdb_process.empty_frame:
+			if new_frame and not self.gdb_process.returningFromMain(new_frame):
 				# "Run" previous frame on stack to function call
 				self.gdb_process.gdbUpdateFrame(self.stack_and_frame_widget.getTopFrame())
 		elif self.reset:

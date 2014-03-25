@@ -78,13 +78,11 @@ class FrameDisplay(QtGui.QTableWidget):
 			self.displayItem(item)
 
 	def displayItem(self, frame_item):
-		print frame_item.title
-		print frame_item.value
 		item_title = QtGui.QLabel()
 		if not frame_item.initialized:
 			item_title.setText(" " + frame_item.title + " =\n     " + UNINITIALIZED)
 		else:
-			item_title.setText(" " + frame_item.title + " =\n     " + frame_item.value)
+			item_title.setText(" " + frame_item.title + " =\n     " + frame_item.struct + frame_item.value)
 
 		row_span = int(frame_item.length)/4
 

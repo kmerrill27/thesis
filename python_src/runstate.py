@@ -98,6 +98,9 @@ class GDBProcess:
 		self.process.sendline(NEXT_FRAME)
 		self.process.expect(GDB_PROMPT)
 
+	def returningFromMain(self, frame):
+		return frame == self.empty_frame
+
 	def mainSetup(self):
 		[line, assembly] = self.getLineAndAssembly()
 
@@ -200,35 +203,39 @@ class GDBProcess:
 		self.process.expect(GDB_PROMPT)
 		addr = parseAddress(self.process.before.strip())
 		frame_item.addr = hex(int(frame_ptr, 16) + int(addr, 16))
-		frame_item.struct = parseStructCheck(self.process.before.strip())
 
 	def getSymbolValue(self, var):
 		self.process.sendline(PRINT_VAR.format(var))
 		self.process.expect(GDB_PROMPT)
 		return parseValue(self.process.before.strip())
 
-	def getStructZoomValue(self, frame_item):
+	def setZoomValue(self, frame_item):
 		if frame_item.struct:
-			if int(val, 16) == NULL_VAL or not frame_item.initialized:
-				frame.zoom_val = "null"
+			if int(frame_item.value, 16) == NULL_VAL or not frame_item.initialized:
+				frame_item.zoom_val = UNINITIALIZED
 			else:
 				self.process.sendline(PRINT_POINTER.format(frame_item.title))
 				self.process.expect(GDB_PROMPT)
 				frame_item.zoom_val = parseValue(self.process.before.strip())
+		else:
+			frame_item.zoom_val = frame_item.value
 
 	def setSymbolValue(self, var, frame_item):
-		frame_item.value = self.getSymbolValue(var)
+		full_val = self.getSymbolValue(var)
+		[frame_item.struct, frame_item.value] = parseStructCheck(full_val)
 		frame_item.initialized = True
-		self.getStructZoomValue(frame_item)
+		self.setZoomValue(frame_item)
 
 	def updateSymbolValue(self, frame_item):
-		val = self.getSymbolValue(frame_item.title)
+		full_val = self.getSymbolValue(frame_item.title)
+		[struct, val] = parseStructCheck(full_val)
 
 		if frame_item.value != val:
 			frame_item.value = val
+			frame_item.struct = struct
 			frame_item.initialized = True
 
-		self.getStructZoomValue(frame_item)
+		self.setZoomValue(frame_item)
 
 	def addAllSymbols(self, frame):
 		for arg in self.getArgs():
@@ -241,9 +248,10 @@ class GDBProcess:
 			frame_item = FrameItem()
 			self.setSymbolInfo(local, frame_item, frame.frame_ptr)
 			# Locals are uninitialized on function enter
-			frame_item.value = self.getSymbolValue(local)
+			full_val = self.getSymbolValue(local)
 			frame_item.initialized = False
 			frame_item.zoom_val = UNINITIALIZED
+			frame_item.struct = NON_STRUCT
 			frame.addItem(frame_item)
 
 	def updateAllSymbols(self, frame):
@@ -261,6 +269,7 @@ class GDBProcess:
 			frame_item.initialized = True
 			frame_item.value = self.getSavedRegisterVal(reg.title)
 			frame_item.zoom_val = frame_item.value
+			frame_item.struct = NON_STRUCT
 
 			if reg.title == self.architecture.base_pointer:
 				frame_item.title = CALLEE_SAVED + " " + reg.title

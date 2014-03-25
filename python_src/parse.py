@@ -81,8 +81,12 @@ def parseHitBreakpointNum(lines):
 def parseSetBreakpointNum(lines):
 	return regexSearch(BREAKPOINT_NUM_REGEX, lines)
 
-def parseStructCheck(addr):
-	return regexSearch(STRUCT_REGEX, addr)
+def parseStructCheck(value):
+	match = re.search(STRUCT_REGEX, value)
+	if match:
+		return [match.group(1) + " ", match.group(2)]
+	else:
+		return [NON_STRUCT, value]
 
 def parseInMainCheck(lines):
 	# Returns none if not in main
