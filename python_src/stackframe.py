@@ -1,4 +1,5 @@
 from PyQt4 import QtGui
+from PyQt4 import QtCore
 from helper import *
 from defs import *
 from arch import *
@@ -23,12 +24,14 @@ class StackFrame:
 
 class FrameItem:
 
-	def __init__(self, title, addr, length, value, initialized):
-		self.title = title
-		self.addr = addr
-		self.length = length
-		self.value = value
-		self.initialized = initialized
+	def __init__(self):
+		self.title = None
+		self.addr = None
+		self.length = None
+		self.value = None
+		self.initialized = None
+		self.struct = None
+		self.zoom_val = None
 
 class FrameDisplay(QtGui.QTableWidget):
 
@@ -70,19 +73,18 @@ class FrameDisplay(QtGui.QTableWidget):
 		# Check if in main
 		if self.frame.stack_ptr != None:
 			self.addTempStorageSpace(int(sorted_list[0].addr, 16))
+
 		for item in sorted_list:
 			self.displayItem(item)
 
 	def displayItem(self, frame_item):
-		item_end = QtGui.QLabel()
-		item_end.setText(str(int(frame_item.addr, 16)))
+		print frame_item.title
+		print frame_item.value
 		item_title = QtGui.QLabel()
 		if not frame_item.initialized:
 			item_title.setText(" " + frame_item.title + " =\n     " + UNINITIALIZED)
 		else:
 			item_title.setText(" " + frame_item.title + " =\n     " + frame_item.value)
-		item_start = QtGui.QLabel()
-		item_start.setText(str(int(frame_item.addr, 16) + int(frame_item.length)))
 
 		row_span = int(frame_item.length)/4
 
@@ -108,4 +110,6 @@ class FrameDisplay(QtGui.QTableWidget):
 
 	def selectionChanged(self, selected, deselected):
 		row = selected.indexes()[0].row()
-		self.addr_box.setText(self.verticalHeaderItem(row).toolTip())
+		addr = self.verticalHeaderItem(row).toolTip()
+		# Convert from QString to string: addr_str = str(addr).replace("^ ", "")
+		self.addr_box.setText(addr)

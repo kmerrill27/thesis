@@ -46,15 +46,6 @@ def parseLineAndAssembly(lines):
 	# TODO: error handling
 	return -1
 
-def parseLineNum(lines):
-	return regexSearch(LINE_NUM_REGEX, lines)
-
-def parseVal(lines):
-	return regexSearch(ADDR_REGEX, lines)
-
-def parseSymbolVal(lines):
-	return regexSearch(PRINT_REGEX, lines)
-
 def parseSavedRegisterVal(lines):
 	return regexSearch(PRINT_SAVED_REGISTER_REGEX, lines)
 
@@ -62,31 +53,15 @@ def parseRegisterVal(lines):
 	return regexSearch(PRINT_REGISTER_REGEX, lines)
 
 def parseVarList(lines):
-	var_list = []
-
-	matches = regexFindAll(VAR_REGEX, lines)
-	for match in matches:
-		var_list.append(VarTuple(match[0], match[1]))
-
-	return var_list
+	return regexFindAll(VAR_NAME_REGEX, lines)
 
 def parseFrameInfo(lines, reg_length):
 	title = regexSearch(FUNCTION_REGEX, lines)
-	line = regexSearch(LINE_REGEX, lines)
 	bottom = regexSearch(BOTTOM_REGEX, lines)
 
 	registers = parseSavedRegisters(lines, reg_length)
 
-	return [title, line, bottom, registers]
-
-def parseSymbols(lines):
-	symbols = []
-	matches = regexFindAll(SYMBOL_REGEX, lines)
-
-	for match in matches:
-		symbols.append(SymbolTuple(match[0], match[1], match[2]))
-
-	return symbols
+	return [title, bottom, registers]
 
 def parseSavedRegisters(lines, reg_length):
 	registers = []
@@ -106,6 +81,9 @@ def parseHitBreakpointNum(lines):
 def parseSetBreakpointNum(lines):
 	return regexSearch(BREAKPOINT_NUM_REGEX, lines)
 
+def parseStructCheck(addr):
+	return regexSearch(STRUCT_REGEX, addr)
+
 def parseInMainCheck(lines):
 	# Returns none if not in main
 	return re.search(IN_MAIN, lines)
@@ -123,6 +101,12 @@ def parseReturnCheck(lines):
 
 	# Returned with no value
 	return [True, None]
+
+def parseValue(lines):
+	return regexSearch(VAL_REGEX, lines)
+
+def parseAddress(lines):
+	return regexSearch(ADDRESS_REGEX, lines)
 
 def regexSearch(regex, lines):
 	match = re.search(regex, lines)

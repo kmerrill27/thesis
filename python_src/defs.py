@@ -76,3 +76,13 @@ EXIT_REGEX = "exited (.*)]"
 POP_ADDR_REGEX = "([0-9a-zA-Z]*)\s<.*>:\spop.*\s.*retq"
 BREAKPOINT_NUM_REGEX = "Breakpoint\s([0-9]*)\sat"
 RETURN_ADDRESS_REGEX = "\s(0x[0-9a-zA-Z]*)\s"
+STRUCT_REGEX = "(\(struct .* \*\)\s)"
+
+NULL_VAL = 0
+SIZEOF = "p sizeof({0})"
+INFO_ADDRESS = "info address {0}"
+PRINT_VAR = "print {0}"
+PRINT_POINTER = "print *{0}"
+ADDRESS_REGEX = "Symbol.*offset\s0\+([-|0-9]*)."
+VAL_REGEX = "\$[0-9]*\s=\s(.*)"
+VAR_NAME_REGEX = "([a-zA-Z0-9_-]*)\s="

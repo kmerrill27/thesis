@@ -68,7 +68,7 @@ class GDBProcess:
 				if returned:
 					return [None, val]
 
-		return [self.functionSetup(self.process.before.strip()), None]
+		return [self.functionSetup(), None]
 
 	def gdbRun(self):
 		self.process.sendline(REMOVE_BR)
@@ -83,28 +83,9 @@ class GDBProcess:
 			self.process = None
 
 	def gdbUpdateCurrentFrame(self, frame):
-		[line, assembly] = self.getLineAndAssembly()
-
-		my_esp = self.getRegisterAddress(self.architecture.stack_pointer)
-
-		locals_list = self.getLocalVars()
-		args_list = self.getArgs()
-
-		# Update values of variables
-		for item in frame.items:
-			for local in locals_list:
-				if item.title == local.title and item.value != local.value:
-					item.value = local.value
-					if not item.initialized:
-						item.initialized = True
-
-			for arg in args_list:
-				if item.title == arg.title and item.value != arg.value:
-					item.value = arg.value
-
-		frame.line = line
-		frame.assembly = assembly
-		frame.stack_pointer = my_esp
+		[frame.line, frame.assembly] = self.getLineAndAssembly()
+		frame.stack_pointer = self.getRegisterAddress(self.architecture.stack_pointer)
+		self.updateAllSymbols(frame)
 
 		return frame
 
@@ -117,35 +98,28 @@ class GDBProcess:
 		self.process.sendline(NEXT_FRAME)
 		self.process.expect(GDB_PROMPT)
 
-	def mainSetup(self, output):
-		assembly = parseAssembly(output)
-
-		line = self.getLineNum()
+	def mainSetup(self):
+		[line, assembly] = self.getLineAndAssembly()
 
 		my_ebp = self.getRegisterAddress(self.architecture.base_pointer)
 
 		frame = StackFrame("main", self.architecture, my_ebp, None, None, line, assembly)
 
-		locals_list = self.getLocalVars()
-
-		self.addSymbols(frame, locals_list)
+		self.addAllSymbols(frame)
 
 		return frame
 
-	def functionSetup(self, output):
-		assembly = parseAssembly(output)
-
-		[title, line, bottom, registers] = self.getFrameInfo()
+	def functionSetup(self):
+		[line, assembly] = self.getLineAndAssembly()
+		[title, bottom, registers] = self.getFrameInfo()
 
 		my_ebp = self.getRegisterAddress(self.architecture.base_pointer)
 		my_esp = self.getRegisterAddress(self.architecture.stack_pointer)
 
 		frame = StackFrame(title, self.architecture, my_ebp, my_esp, bottom, line, assembly)
 
-		locals_list = self.getLocalVars()
-
 		self.addSavedRegisters(frame, registers)
-		self.addSymbols(frame, locals_list)
+		self.addAllSymbols(frame)
 
 		return frame
 
@@ -162,7 +136,7 @@ class GDBProcess:
 		self.process.sendline(RUN)
 		self.process.expect(GDB_PROMPT)
 
-		return self.mainSetup(self.process.before.strip())
+		return self.mainSetup()
 
 	def setArchitecture(self):
 		self.process.sendline(INFO_TARGET)
@@ -176,16 +150,12 @@ class GDBProcess:
 		self.process.sendline(SRC_LINE)
 		self.process.expect(GDB_PROMPT)
 		[line, assembly_start, assembly_end] = parseLineAndAssembly(self.process.before.strip())
+		
 		# Add one to address so inclusive of add instruction
 		self.process.sendline(DISAS.format(assembly_start, hex(int(assembly_end, 16)+1)))
 		self.process.expect(GDB_PROMPT)
 		assembly = parseAssembly(self.process.before.strip())
 		return [line, assembly]
-
-	def getLineNum(self):
-		self.process.sendline(SRC_LINE)
-		self.process.expect(GDB_PROMPT)
-		return parseLineNum(self.process.before.strip())
 
 	def getFrameInfo(self):
 		self.process.sendline(INFO_FRAME)
@@ -201,11 +171,6 @@ class GDBProcess:
 		self.process.sendline(INFO_LOCALS)
 		self.process.expect(GDB_PROMPT)
 		return parseVarList(self.process.before.strip())
-
-	def getSymbol(self, sym):
-		self.process.sendline(PRINT_SYMBOL.format(sym.title))
-		self.process.expect(GDB_PROMPT)
-		return parseSymbolVal(self.process.before.strip())
 
 	def getRegisterAddress(self, register_name):
 		self.process.sendline(PRINT_REGISTER.format(register_name))
@@ -224,28 +189,82 @@ class GDBProcess:
 		self.process.expect(GDB_PROMPT)
 		return val
 
-	def addSymbols(self, frame, locals_list):
-		self.process.sendline(INFO_SCOPE.format(frame.title))
+	def setSymbolInfo(self, var, frame_item, frame_ptr):
+		frame_item.title = var
+
+		self.process.sendline(SIZEOF.format(var))
 		self.process.expect(GDB_PROMPT)
-		symbols = parseSymbols(self.process.before.strip())
+		frame_item.length = parseValue(self.process.before.strip())
 
-		for sym in symbols:
-			initialized = True
-			for local in locals_list:
-				if sym.title == local.title:
-					initialized = False
-			
-			sym_val = self.getSymbol(sym)
+		self.process.sendline(INFO_ADDRESS.format(var))
+		self.process.expect(GDB_PROMPT)
+		addr = parseAddress(self.process.before.strip())
+		frame_item.addr = hex(int(frame_ptr, 16) + int(addr, 16))
+		frame_item.struct = parseStructCheck(self.process.before.strip())
 
-			frame.addItem(FrameItem(sym.title, hex(int(frame.frame_ptr, 16) + int(sym.addr, 16)), sym.length, sym_val, initialized))
+	def getSymbolValue(self, var):
+		self.process.sendline(PRINT_VAR.format(var))
+		self.process.expect(GDB_PROMPT)
+		return parseValue(self.process.before.strip())
+
+	def getStructZoomValue(self, frame_item):
+		if frame_item.struct:
+			if int(val, 16) == NULL_VAL or not frame_item.initialized:
+				frame.zoom_val = "null"
+			else:
+				self.process.sendline(PRINT_POINTER.format(frame_item.title))
+				self.process.expect(GDB_PROMPT)
+				frame_item.zoom_val = parseValue(self.process.before.strip())
+
+	def setSymbolValue(self, var, frame_item):
+		frame_item.value = self.getSymbolValue(var)
+		frame_item.initialized = True
+		self.getStructZoomValue(frame_item)
+
+	def updateSymbolValue(self, frame_item):
+		val = self.getSymbolValue(frame_item.title)
+
+		if frame_item.value != val:
+			frame_item.value = val
+			frame_item.initialized = True
+
+		self.getStructZoomValue(frame_item)
+
+	def addAllSymbols(self, frame):
+		for arg in self.getArgs():
+			frame_item = FrameItem()
+			self.setSymbolInfo(arg, frame_item, frame.frame_ptr)
+			self.setSymbolValue(arg, frame_item)
+			frame.addItem(frame_item)
+
+		for local in self.getLocalVars():
+			frame_item = FrameItem()
+			self.setSymbolInfo(local, frame_item, frame.frame_ptr)
+			# Locals are uninitialized on function enter
+			frame_item.value = self.getSymbolValue(local)
+			frame_item.initialized = False
+			frame_item.zoom_val = UNINITIALIZED
+			frame.addItem(frame_item)
+
+	def updateAllSymbols(self, frame):
+		for item in frame.items:
+			# Don't update saved registers
+			if CALLEE_SAVED not in item.title and RETURN_ADDRESS not in item.title:
+				self.updateSymbolValue(item)
 
 	def addSavedRegisters(self, frame, registers):
 		for reg in registers:
-			reg_val = self.getSavedRegisterVal(reg.title)
+			frame_item = FrameItem()
+
+			frame_item.addr = reg.addr
+			frame_item.length = reg.length
+			frame_item.initialized = True
+			frame_item.value = self.getSavedRegisterVal(reg.title)
+			frame_item.zoom_val = frame_item.value
 
 			if reg.title == self.architecture.base_pointer:
-				reg.title = CALLEE_SAVED + " " + reg.title
+				frame_item.title = CALLEE_SAVED + " " + reg.title
 			elif reg.title == self.architecture.instr_pointer:
-				reg.title = RETURN_ADDRESS
+				frame_item.title = RETURN_ADDRESS
 			
-			frame.addItem(FrameItem(reg.title, reg.addr, reg.length, reg_val, True))
+			frame.addItem(frame_item)
