@@ -247,17 +247,17 @@ class GDBProcess:
 		for local in self.getLocalVars():
 			frame_item = FrameItem()
 			self.setSymbolInfo(local, frame_item, frame.frame_ptr)
-			# Locals are uninitialized on function enter
 			full_val = self.getSymbolValue(local)
+			[frame_item.struct, frame_item.value] = parseStructCheck(full_val)
+			# Locals are uninitialized on function enter
 			frame_item.initialized = False
 			frame_item.zoom_val = UNINITIALIZED
-			frame_item.struct = NON_STRUCT
 			frame.addItem(frame_item)
 
 	def updateAllSymbols(self, frame):
 		for item in frame.items:
 			# Don't update saved registers
-			if CALLEE_SAVED not in item.title and RETURN_ADDRESS not in item.title:
+			if CALLER_SAVED not in item.title and RETURN_ADDRESS not in item.title:
 				self.updateSymbolValue(item)
 
 	def addSavedRegisters(self, frame, registers):
@@ -272,7 +272,7 @@ class GDBProcess:
 			frame_item.struct = NON_STRUCT
 
 			if reg.title == self.architecture.base_pointer:
-				frame_item.title = CALLEE_SAVED + " " + reg.title
+				frame_item.title = CALLER_SAVED + " " + reg.title
 			elif reg.title == self.architecture.instr_pointer:
 				frame_item.title = RETURN_ADDRESS
 			

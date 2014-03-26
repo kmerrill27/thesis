@@ -8,6 +8,7 @@ class StackVisualizer(QtGui.QWidget):
 	def __init__(self):
 		super(StackVisualizer, self).__init__()
 		self.initUI()
+		self.inspectOn = False
 
 	def initUI(self):
 		grid = QtGui.QGridLayout(self)
@@ -30,6 +31,7 @@ class StackVisualizer(QtGui.QWidget):
 		self.setupAction("Function step", ARROW_ICON, "Ctrl+Right", self.functionStep)
 		self.setupAction("Run", ARROW_ICON, "Space", self.run)
 		self.setupAction("Reset", ARROW_ICON, "Ctrl+Left", self.reset)
+		self.setupAction("Inspect", INSPECT_ICON, "Ctrl+Up", self.toggleInspect)
 
 	def setupAction(self, name, icon, shortcut, handler):
 		action = QtGui.QAction(QtGui.QIcon(icon), name, self)
@@ -100,6 +102,16 @@ class StackVisualizer(QtGui.QWidget):
 			self.source_and_assembly_widget.clear()
 
 			QtGui.QApplication.restoreOverrideCursor()
+
+	def toggleInspect(self):
+		if self.inspectOn:
+			QtGui.QApplication.restoreOverrideCursor()
+			self.inspectOn = False
+		else:
+			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WhatsThisCursor))
+			self.inspectOn = True
+
+		self.stack_and_frame_widget.toggleInspect(self.inspectOn)
 
 	def getNextFrame(self):
 		if self.gdb_process.process:

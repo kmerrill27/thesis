@@ -26,6 +26,9 @@ class FrameWidget(QtGui.QFrame):
 		self.retval_box.setText(PROGRAM_FINISHED.format(exit_status))
 		self.window.updateFrameDisplay(frame)
 
+	def toggleInspect(self, inspectOn):
+		self.window.toggleInspect(inspectOn)
+
 	def clearBoxes(self):
 		self.retval_box.clear()
 		self.addr_box.clear()
@@ -68,6 +71,11 @@ class FrameWindow(QtGui.QWidget):
 		self.frame = QtGui.QVBoxLayout()
 		self.frame.addStretch()
 		self.setLayout(self.frame)
+
+	def toggleInspect(self, inspectOn):
+		if self.frame_display:
+			self.frame_display.toggleInspect(inspectOn)
+			self.addr_box.clear()
 
 	def updateFrameDisplay(self, frame):
 		self.current_frame = None

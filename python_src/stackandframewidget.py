@@ -43,6 +43,10 @@ class StackAndFrameWidget(QtGui.QFrame):
 		self.gdb_process.gdbReset()
 		self.finished = False
 
+	def toggleInspect(self, inspectOn):
+		self.frame_widget.toggleInspect(inspectOn)
+		self.stack_widget.toggleInspect(inspectOn)
+
 	def setToMainFrame(self):
 		self.stack_widget.setToMainFrame()
 

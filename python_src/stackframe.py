@@ -39,6 +39,7 @@ class FrameDisplay(QtGui.QTableWidget):
 		super(FrameDisplay, self).__init__()
 		self.frame = frame
 		self.addr_box = addr_box
+		self.inspectOn = False
 		self.initUI()
 
 	def initUI(self):
@@ -48,6 +49,19 @@ class FrameDisplay(QtGui.QTableWidget):
 		self.updateDisplay()
 		self.setMaximumHeight(self.rowCount()*self.rowHeight(0) + 2)
 		self.highlightStackPointer()
+
+		self.cellClicked.connect(self.cellInspected)
+
+	def toggleInspect(self, inspectOn):
+		self.inspectOn = inspectOn
+
+	def cellInspected(self, row, col):
+		if self.inspectOn:
+			item = self.cellWidget(row, col)
+			if item:
+				self.addr_box.setText(item.statusTip())
+			else:
+				self.addr_box.clear()
 
 	def highlightStackPointer(self):
 		for i in range(0, self.rowCount()):
@@ -81,8 +95,10 @@ class FrameDisplay(QtGui.QTableWidget):
 		item_title = QtGui.QLabel()
 		if not frame_item.initialized:
 			item_title.setText(" " + frame_item.title + " =\n     " + UNINITIALIZED)
+			item_title.setStatusTip(UNINITIALIZED)
 		else:
 			item_title.setText(" " + frame_item.title + " =\n     " + frame_item.struct + frame_item.value)
+			item_title.setStatusTip(frame_item.zoom_val)
 
 		row_span = int(frame_item.length)/4
 
@@ -107,7 +123,6 @@ class FrameDisplay(QtGui.QTableWidget):
 			self.setSpan(new_row, 0, row_span, 1)
 
 	def selectionChanged(self, selected, deselected):
-		row = selected.indexes()[0].row()
-		addr = self.verticalHeaderItem(row).toolTip()
-		# Convert from QString to string: addr_str = str(addr).replace("^ ", "")
-		self.addr_box.setText(addr)
+		if not self.inspectOn and len(selected.indexes()) > 0:
+			row = selected.indexes()[0].row()
+			self.addr_box.setText(self.verticalHeaderItem(row).toolTip())
