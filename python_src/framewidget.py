@@ -1,7 +1,8 @@
-from helper import *
 from stackframe import *
+from widgetwrapper import *
 
 class FrameWidget(QtGui.QFrame):
+	""" Widget for displaying selected stack frame """
 
 	def __init__(self):
 		super(FrameWidget, self).__init__()
@@ -9,47 +10,51 @@ class FrameWidget(QtGui.QFrame):
 
 	def initUI(self):
 		self.top_bar = FrameTopBar()
+
 		self.retval_box = QtGui.QLineEdit()
 		self.retval_box.setReadOnly(True)
+
 		self.addr_box = QtGui.QLineEdit()
 		self.addr_box.setReadOnly(True)
+
 		self.window = FrameWindow(self.addr_box)
 		frameWrapVert(self, [self.top_bar, self.retval_box, self.addr_box, self.window])
 
 	def returned(self, retval):
+		""" Display (possibly void) function return value """
 		if retval:
 			self.retval_box.setText(RETURNED_WITH.format(retval))
 		else:
 			self.retval_box.setText(RETURNED_VOID)
 
 	def finish(self, exit_status, frame):
+		""" Display program execution completed message """
 		self.retval_box.setText(PROGRAM_FINISHED.format(exit_status))
-		self.window.updateFrameDisplay(frame)
+		self.displayFrame(frame)
 
 	def toggleDecimal(self, decimal_on):
+		""" Toggle decimal mode, which displays address as hex or dec """
 		self.window.toggleDecimal(decimal_on)
 
 	def toggleInspect(self, inspectOn):
+		""" Toggle inspect mode, which displays struct zoom values """
 		self.window.toggleInspect(inspectOn)
 
 	def clearBoxes(self):
+		""" Clear message boxes """
 		self.retval_box.clear()
 		self.addr_box.clear()
 
 	def clear(self):
+		""" Clear frame display and message boxes """
 		self.clearBoxes()
 		self.window.clear()
-
-	def updateFrame(self, frame):
-		self.window.updateFrameDisplay(frame)
 
 	def displayFrame(self, frame):
 		self.window.displayFrame(frame)
 
-	def getCurrentFrame(self):
-		return self.window.current_frame
-
 class FrameTopBar(QtGui.QWidget):
+	""" Menu bar for frame widget label """
 
 	def __init__(self):
 		super(FrameTopBar, self).__init__()
@@ -57,19 +62,20 @@ class FrameTopBar(QtGui.QWidget):
 
 	def initUI(self):
 		label = QtGui.QLabel()
-		label.setText("Stack Frame")
+		label.setText(FRAME_WIDGET_TITLE)
 
 		box = QtGui.QHBoxLayout()
 		box.addWidget(label)
+
 		self.setLayout(box)
 
 class FrameWindow(QtGui.QWidget):
+	""" Window for displaying selected stack frame info """
 
 	def __init__(self, addr_box):
 		super(FrameWindow, self).__init__()
 		self.initUI()
 		self.addr_box = addr_box
-		self.current_frame = None
 		self.frame_display = None
 		self.base_label = None
 		self.inspect_on = False
@@ -81,33 +87,31 @@ class FrameWindow(QtGui.QWidget):
 		self.setLayout(self.frame)
 
 	def toggleDecimal(self, decimal_on):
+		""" Toggle decimal mode, which displays address as hex or dec """
 		if self.frame_display:
 			self.frame_display.toggleDecimal(decimal_on)
 		self.decimal_on = decimal_on
 
 	def toggleInspect(self, inspect_on):
+		""" Toggle inspect mode, which displays struct zoom values """
 		if self.frame_display:
 			self.frame_display.toggleInspect(inspect_on)
 		self.inspect_on = inspect_on
 
-	def updateFrameDisplay(self, frame):
-		self.current_frame = None
-		self.displayFrame(frame)
-
 	def displayFrame(self, frame):
-		if frame != self.current_frame:
-			if self.frame_display != None:
-				self.clear()
+		""" Display frame items """
+		if self.frame_display != None:
+			# Clear current display
+			self.clear()
 
-			self.current_frame = frame
-			self.frame_display = FrameDisplay(frame, self.addr_box, self.inspect_on, self.decimal_on)
-			self.frame.addWidget(self.frame_display, 1)
+		self.frame_display = FrameDisplay(frame, self.addr_box, self.inspect_on, self.decimal_on)
+		self.frame.addWidget(self.frame_display, 1)
 
-			# Check if in main (will be None)
-			if frame.bottom:
-				self.base_label = QtGui.QLabel()
-				self.base_label.setText("Frame bottom: " + frame.bottom)
-				self.frame.addWidget(self.base_label)
+		if frame.bottom:
+			# Not in main - main has not base address label
+			self.base_label = QtGui.QLabel()
+			self.base_label.setText(FRAME_BOTTOM + frame.bottom)
+			self.frame.addWidget(self.base_label)
 
 	def clear(self):
 		self.removeItem(self.frame_display)
@@ -116,7 +120,6 @@ class FrameWindow(QtGui.QWidget):
 
 		self.frame_display = None
 		self.base_label = None
-		self.current_frame = None
 
 	def removeItem(self, item):
 		if item:

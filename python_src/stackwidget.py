@@ -1,4 +1,4 @@
-from helper import *
+from widgetwrapper import *
 
 class StackTopBar(QtGui.QWidget):
 

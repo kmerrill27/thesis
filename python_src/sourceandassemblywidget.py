@@ -1,5 +1,5 @@
-from sourcewidget import *
 from assemblywidget import *
+from sourcewidget import *
 
 class SourceAndAssemblyWidget(QtGui.QFrame):
 

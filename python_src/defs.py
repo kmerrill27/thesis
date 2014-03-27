@@ -4,6 +4,9 @@ RUN_SCRIPT = "gdb -x {0} {1}"
 C_COMPILE_ARGS = ["gcc", "-g", "ARG1", "-o", "ARG2"]
 C_COMPILE = "gcc -g {0} -o {1}"
 
+ASSEMBLY_WIDGET_TITLE = "Assembly Code"
+FRAME_WIDGET_TITLE = "Stack Frame"
+FRAME_BOTTOM = "Frame bottom: "
 ASSEMBLY_START = "=>"
 UNINITIALIZED = "null"
 CALLER_SAVED = "Caller"
@@ -13,11 +16,15 @@ RETURNED_VOID = "Function returned void."
 RETURNED_WITH = "Function returned {0}."
 ASSEMBLER_DUMP = "End of assembler dump."
 DUMP_OF_ASSEMBLY = "Dump of assembler code from"
+CARAT = "^ "
+CURSOR_SIZE = 24
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 600
 
 INIT_FILE = "./../gdb/init.gdb"
 
 NOT_C_SOURCE = "ERROR: not a C source file"
-TITLE = "StackExplorer"
+APP_TITLE = "StackExplorer"
 LINE_ICON = "./../static/arrow.png"
 FUNCTION_ICON = "./../static/double_arrow.png"
 STACK_ICON = "./../static/stack.png"

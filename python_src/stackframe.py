@@ -1,8 +1,8 @@
+from arch import *
+from defs import *
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from helper import *
-from defs import *
-from arch import *
+from widgetwrapper import *
 
 class StackFrame:
 
@@ -72,7 +72,7 @@ class FrameDisplay(QtGui.QTableWidget):
 			self.insertRow(self.rowCount())
 			header = QtGui.QTableWidgetItem("")
 			curr_addr = hex(int(self.frame.stack_ptr, 16) + 4*i)
-			header.setToolTip("^ " + str(curr_addr))
+			header.setToolTip(CARAT + str(curr_addr))
 			self.setVerticalHeaderItem(self.rowCount() - 1, header)
 
 			if self.frame.stack_ptr == curr_addr:
@@ -101,7 +101,7 @@ class FrameDisplay(QtGui.QTableWidget):
 		for i in range(0, row_span):
 			self.insertRow(self.rowCount())
 			header = QtGui.QTableWidgetItem("")
-			header.setToolTip("^ " + str(hex(int(frame_item.addr, 16) + 4*i)))
+			header.setToolTip(CARAT + str(hex(int(frame_item.addr, 16) + 4*i)))
 			self.setVerticalHeaderItem(self.rowCount() - 1, header)
 
 			if i == 0:
@@ -125,7 +125,7 @@ class FrameDisplay(QtGui.QTableWidget):
 			row = selected[0].row()
 			addr = self.verticalHeaderItem(row).toolTip()
 			if self.decimal_on:
-				addr = "^ " + str(int(str(addr.replace("^ ", "")), 16))
+				addr = CARAT + str(int(str(addr.replace(CARAT, "")), 16))
 				self.addr_box.setText(addr)
 			elif not self.inspect_on:
 				self.addr_box.setText(addr)

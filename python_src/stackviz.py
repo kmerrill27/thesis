@@ -1,9 +1,10 @@
+from defs import *
+from gdbprocess import *
 from sourceandassemblywidget import *
 from stackandframewidget import *
-from runstate import *
-from defs import *
 
 class StackVisualizer(QtGui.QWidget):
+	""" Central StackExplorer widget for controlling all user interaction """
 
 	def __init__(self):
 		super(StackVisualizer, self).__init__()
@@ -11,14 +12,17 @@ class StackVisualizer(QtGui.QWidget):
 
 	def initUI(self):
 		grid = QtGui.QGridLayout(self)
-
 		self.gdb_process = GDBProcess()
+
+		# Initialize widget views
 		self.source_and_assembly_widget = SourceAndAssemblyWidget()
 		self.stack_and_frame_widget = StackAndFrameWidget(self.gdb_process, self.source_and_assembly_widget)
 		self.source_and_assembly_widget.setStackAndFrameWidget(self.stack_and_frame_widget)
+
 		self.toolbar = QtGui.QToolBar()
 		self.setupToolbar()
 
+		# Set up mode actions
 		self.inspect_action = self.setupAction("Inspect", INSPECT_ICON, "Ctrl+Up", self.toggleInspect, True)
 		self.inspect_cursor = self.getCursor(INSPECT_ICON)
 		self.decimal_action = self.setupAction("Decimal", DECIMAL_ICON, "Ctrl+1", self.toggleDecimal, True)
@@ -29,8 +33,8 @@ class StackVisualizer(QtGui.QWidget):
 		self.setLayout(grid)
 
 	def setupToolbar(self):
-		# On Mac OS X, Ctrl corresponds to Command key
 		self.addSpacer()
+		# On Mac OS X, Ctrl corresponds to Command key
 		self.setupAction("Line step", LINE_ICON, "Right", self.lineStep, False)
 		self.setupAction("Function step", FUNCTION_ICON, "Ctrl+Right", self.functionStep, False)
 		self.setupAction("Run", RUN_ICON, "Space", self.run, False)
@@ -42,8 +46,11 @@ class StackVisualizer(QtGui.QWidget):
 		action.setStatusTip(name)
 		action.setCheckable(checkable)
 		action.triggered.connect(handler)
+
 		label = QtGui.QLabel()
 		label.setText(name)
+
+		# Add action and label to toolbar
 		self.toolbar.addAction(action)
 		self.toolbar.addWidget(label)
 		self.addSpacer()
@@ -51,6 +58,7 @@ class StackVisualizer(QtGui.QWidget):
 		return action
 
 	def addSpacer(self):
+		# Add space block between toolbar elements
 		spacer = QtGui.QWidget()
 		spacer.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 		self.toolbar.addWidget(spacer)
@@ -111,12 +119,12 @@ class StackVisualizer(QtGui.QWidget):
 		if not self.stack_and_frame_widget.finished and self.source_and_assembly_widget.isSource():
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
-			if self.gdb_process.process:
-				self.stack_and_frame_widget.setToMainFrame()
-			else:
-				new_frame = self.gdb_process.startProcess()
-				self.stack_and_frame_widget.addFrame(new_frame)
+			# Restart program and add main frame
+			self.reset()
+			new_frame = self.gdb_process.startProcess()
+			self.stack_and_frame_widget.addFrame(new_frame)
 
+			# Run program until end and update display
 			self.gdb_process.gdbRun()
 			self.finish()
 
@@ -126,6 +134,7 @@ class StackVisualizer(QtGui.QWidget):
 		if self.source_and_assembly_widget.isSource():
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
+			# Clear all widgets and reset gdb process
 			self.stack_and_frame_widget.reset()
 			self.source_and_assembly_widget.clear()
 
@@ -133,27 +142,33 @@ class StackVisualizer(QtGui.QWidget):
 
 	def toggleDecimal(self, checked):
 		if not checked:
+			# Deselect decimal
 			QtGui.QApplication.restoreOverrideCursor()
 			self.stack_and_frame_widget.toggleDecimal(False)
 		else:
 			if self.inspect_action.isChecked():
+				# Deselect inspect - only one of decimal and inspect allowed at a time
 				QtGui.QApplication.restoreOverrideCursor()
 				self.inspect_action.setChecked(False)
 				self.stack_and_frame_widget.toggleInspect(False)
 
+			# Select decimal
 			QtGui.QApplication.setOverrideCursor(self.decimal_cursor)
 			self.stack_and_frame_widget.toggleDecimal(True)
 
 	def toggleInspect(self, checked):
 		if not checked:
+			# Deselect inspect
 			QtGui.QApplication.restoreOverrideCursor()
 			self.stack_and_frame_widget.toggleInspect(False)
 		else:
 			if self.decimal_action.isChecked():
+				# Deselect decimal - only one of inspect and decimal allowed at a time
 				QtGui.QApplication.restoreOverrideCursor()
 				self.decimal_action.setChecked(False)
 				self.stack_and_frame_widget.toggleDecimal(False)
 
+			# Select inspect
 			QtGui.QApplication.setOverrideCursor(self.inspect_cursor)
 			self.stack_and_frame_widget.toggleInspect(True)
 
@@ -171,13 +186,17 @@ class StackVisualizer(QtGui.QWidget):
 		return [new_frame, retval]
 
 	def finish(self):
-			frame = self.gdb_process.gdbUpdateCurrentFrame(self.stack_and_frame_widget.getCurrentFrame())
+			# Set display to last line of main
+			frame = self.gdb_process.gdbUpdateCurrentFrame(self.stack_and_frame_widget.getTopFrame())
 			self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
+			# Run program until end for exit status
 			exit_status = self.gdb_process.gdbFinishUp()
+			# Display exit status and set self.stack_and_frame_widget.finished to True
 			self.stack_and_frame_widget.finish(exit_status, frame)
 
 	def getCursor(self, icon):
+		# Create custom cursor from image file
 		img = QtGui.QImage(icon)
 		pixmap = QtGui.QPixmap.fromImage(img)
-		pixmap = pixmap.scaled(32, 32, QtCore.Qt.KeepAspectRatio)
+		pixmap = pixmap.scaled(CURSOR_SIZE, CURSOR_SIZE, QtCore.Qt.KeepAspectRatio)
 		return QtGui.QCursor(pixmap, -1, -1)

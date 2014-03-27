@@ -1,8 +1,10 @@
-from PyQt4 import QtGui
+from defs import *
 from PyQt4 import QtCore
-from helper import *
+from PyQt4 import QtGui
+from widgetwrapper import *
 
 class AssemblyWidget(QtGui.QFrame):
+	""" Widget for assembly instructions """
 
 	def __init__(self):
 		super(AssemblyWidget, self).__init__()
@@ -20,6 +22,7 @@ class AssemblyWidget(QtGui.QFrame):
 		self.window.displayLines(lines)
 
 class AssemblyTopBar(QtGui.QWidget):
+	""" Menu bar for assembly widget label """
 
 	def __init__(self):
 		super(AssemblyTopBar, self).__init__()
@@ -27,13 +30,14 @@ class AssemblyTopBar(QtGui.QWidget):
 
 	def initUI(self):
 		label = QtGui.QLabel()
-		label.setText("Assembly Code")
+		label.setText(ASSEMBLY_WIDGET_TITLE)
 
 		box = QtGui.QHBoxLayout()
 		box.addWidget(label)
 		self.setLayout(box)
 
 class AssemblyWindow(QtGui.QListWidget):
+	""" Window for displaying assembly instructions """
 
 	def __init__(self):
 		super(AssemblyWindow, self).__init__()
@@ -45,14 +49,14 @@ class AssemblyWindow(QtGui.QListWidget):
 	def highlightLine(self, line_num):
 		self.setCurrentRow(line_num)
 
-	# Override to disallow user from selecting line
 	def keyPressEvent(self, event):
+		""" Override to disallow user from selecting line """
 		return
 
-	# Override to disallow user from selecting line
 	def mousePressEvent(self, event):
+		""" Override to disallow user from selecting line """
 		return
 
-	# Override to disallow user from selecting line
 	def mouseMoveEvent(self, event):
+		""" Override to disallow user from selecting line """
 		return

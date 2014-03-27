@@ -1,10 +1,9 @@
+import os
 import platform
+
 from defs import *
-from gdbstream import *
-from parse import *
 from stackandframewidget import *
-from helper import *
-from runstate import *
+from widgetwrapper import *
 
 class SourceWidget(QtGui.QFrame):
 

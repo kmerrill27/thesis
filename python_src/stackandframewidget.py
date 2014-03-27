@@ -1,6 +1,6 @@
+from framewidget import *
 from stackframe import *
 from stackwidget import *
-from framewidget import *
 
 class StackAndFrameWidget(QtGui.QFrame):
 
@@ -22,7 +22,7 @@ class StackAndFrameWidget(QtGui.QFrame):
 		wrapHoriz(self, [self.stack_widget_frame, self.frame_widget])
 
 	def updateFrame(self, frame):
-		self.frame_widget.updateFrame(frame)
+		self.frame_widget.displayFrame(frame)
 		self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
 
 	def addFrame(self, frame):
@@ -55,11 +55,5 @@ class StackAndFrameWidget(QtGui.QFrame):
 	def toggleInspect(self, inspect_on):
 		self.frame_widget.toggleInspect(inspect_on)
 
-	def setToMainFrame(self):
-		self.stack_widget.setToMainFrame()
-
 	def getTopFrame(self):
 		return self.stack_widget.getTopFrame()
-
-	def getCurrentFrame(self):
-		return self.frame_widget.getCurrentFrame()

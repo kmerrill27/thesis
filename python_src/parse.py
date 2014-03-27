@@ -1,5 +1,5 @@
-import os
 import re
+
 from defs import *
 from PyQt4 import QtCore
 
@@ -9,12 +9,6 @@ class SymbolTuple:
 		self.title = title
 		self.addr = addr
 		self.length = length
-
-class VarTuple:
-
-	def __init__(self, title, value):
-		self.title = title
-		self.value = value
 
 def parseAssembly(lines):
 	assembly = []
@@ -101,15 +95,7 @@ def parseLineStepCheck(lines):
 		print "hit breakpoint"
 		return [False, breakpoint_num]
 
-	returned = re.search(RETURNED_REGEX, lines)
-	if returned:
-		# Returned
-		print "returned"
-		return [True, None]
-	else:
-		# Inside same function
-		print "same function"
-		return [False, None]
+	# TODO: check if returned (with or without val) or if in same function
 
 def parseReturnCheck(lines):
 	retval = regexSearch(RETURN_REGEX, lines)
