@@ -44,9 +44,7 @@ class GDBProcess:
 	def gdbLineStep(self):
 		self.process.sendline(LINE_STEP)
 		self.process.expect(GDB_PROMPT)
-		# Update stack args - check if hits breakpoint
-		# If hits breakpoint, in new function - update stack
-		# Check if finished
+		return parseLineStepCheck(self.process.before.strip())
 
 	def gdbFunctionStep(self):
 		if not self.started:
@@ -60,7 +58,7 @@ class GDBProcess:
 			if parseInMainCheck(self.process.before.strip()):
 				self.process.sendline(CONTINUE)
 				self.process.expect(GDB_PROMPT)
-				if self.mainBreakpoint == parseHitBreakpointNum(self.process.before.strip()):
+				if self.hitFinalBreakpoint(parseHitBreakpointNum(self.process.before.strip())):
 					return [self.empty_frame, None]
 			else:
 				[returned, val] = parseReturnCheck(self.process.before.strip())
@@ -149,6 +147,9 @@ class GDBProcess:
 		self.architecture = MachineArchitecture()
 		self.architecture.setArchitecture(int(bits))
 
+	def hitFinalBreakpoint(self, num):
+		return self.mainBreakpoint == num
+
 	def getLineAndAssembly(self):
 		self.process.sendline(SRC_LINE)
 		self.process.expect(GDB_PROMPT)
@@ -164,6 +165,11 @@ class GDBProcess:
 		self.process.sendline(INFO_FRAME)
 		self.process.expect(GDB_PROMPT)
 		return parseFrameInfo(self.process.before.strip(), self.architecture.reg_length)
+
+	def getNumFrames(self):
+		self.process.sendline(INFO_STACK)
+		self.expect(GDB_PROMPT)
+		return parseNumFrames(self.process.before.strip())
 
 	def getArgs(self):
 		self.process.sendline(INFO_ARGS)

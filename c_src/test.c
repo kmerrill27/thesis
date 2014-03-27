@@ -6,28 +6,37 @@
 
  #include <stdio.h>
 
+ void hello(int);
  void factorial(int);
 
  int main()
  {
  	int n = 5;
- 	factorial(n);
+	hello(n);
  	printf("factorial(%d)\n", n);
 
 	// return comment
  	return 1;
  }
 
+ void hello(int n)
+ {
+	int num = 3;
+	int num2 = 4;
+	
+	factorial(n);
+ }
+
  void factorial(int n)
  {
- 	int last_fact = 1;
- 	int curr_fact = n;
-
- 	while(n > 1)
- 	{
- 		curr_fact = last_fact * n;
- 		last_fact = curr_fact;
- 		n--;
- 	}
+	 if (n == 0 || n == 1)
+	 {
+		 n--;
+		 return;
+	 }
+	 else
+	 {
+		 factorial(n-1);
+	 }
  }
  

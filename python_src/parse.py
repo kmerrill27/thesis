@@ -92,6 +92,25 @@ def parseInMainCheck(lines):
 	# Returns none if not in main
 	return re.search(IN_MAIN, lines)
 
+def parseLineStepCheck(lines):
+	print lines
+
+	breakpoint_num = parseHitBreakpointNum(lines)
+	if breakpoint_num:
+		# Hit breakpoint
+		print "hit breakpoint"
+		return [False, breakpoint_num]
+
+	returned = re.search(RETURNED_REGEX, lines)
+	if returned:
+		# Returned
+		print "returned"
+		return [True, None]
+	else:
+		# Inside same function
+		print "same function"
+		return [False, None]
+
 def parseReturnCheck(lines):
 	retval = regexSearch(RETURN_REGEX, lines)
 	# Returned with value

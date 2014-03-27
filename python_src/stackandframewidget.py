@@ -21,14 +21,20 @@ class StackAndFrameWidget(QtGui.QFrame):
 		frameWrapVert(self.stack_widget_frame, [self.top_bar, self.stack_widget])
 		wrapHoriz(self, [self.stack_widget_frame, self.frame_widget])
 
+	def updateFrame(self, frame):
+		self.frame_widget.updateFrame(frame)
+		self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
+
 	def addFrame(self, frame):
 		self.stack_widget.addFrame(frame)
+		self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
 
 	def removeFrame(self):
 		return self.stack_widget.removeFrame()
 
 	def returned(self, retval):
 		self.frame_widget.returned(retval)
+		self.removeFrame()
 
 	def finish(self, exit_status, frame):
 		self.frame_widget.finish(exit_status, frame)
@@ -43,9 +49,11 @@ class StackAndFrameWidget(QtGui.QFrame):
 		self.gdb_process.gdbReset()
 		self.finished = False
 
-	def toggleInspect(self, inspectOn):
-		self.frame_widget.toggleInspect(inspectOn)
-		self.stack_widget.toggleInspect(inspectOn)
+	def toggleDecimal(self, decimal_on):
+		self.frame_widget.toggleDecimal(decimal_on)
+
+	def toggleInspect(self, inspect_on):
+		self.frame_widget.toggleInspect(inspect_on)
 
 	def setToMainFrame(self):
 		self.stack_widget.setToMainFrame()

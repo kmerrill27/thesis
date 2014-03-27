@@ -26,6 +26,9 @@ class FrameWidget(QtGui.QFrame):
 		self.retval_box.setText(PROGRAM_FINISHED.format(exit_status))
 		self.window.updateFrameDisplay(frame)
 
+	def toggleDecimal(self, decimal_on):
+		self.window.toggleDecimal(decimal_on)
+
 	def toggleInspect(self, inspectOn):
 		self.window.toggleInspect(inspectOn)
 
@@ -36,6 +39,9 @@ class FrameWidget(QtGui.QFrame):
 	def clear(self):
 		self.clearBoxes()
 		self.window.clear()
+
+	def updateFrame(self, frame):
+		self.window.updateFrameDisplay(frame)
 
 	def displayFrame(self, frame):
 		self.window.displayFrame(frame)
@@ -66,16 +72,23 @@ class FrameWindow(QtGui.QWidget):
 		self.current_frame = None
 		self.frame_display = None
 		self.base_label = None
+		self.inspect_on = False
+		self.decimal_on = False
 
 	def initUI(self):
 		self.frame = QtGui.QVBoxLayout()
 		self.frame.addStretch()
 		self.setLayout(self.frame)
 
-	def toggleInspect(self, inspectOn):
+	def toggleDecimal(self, decimal_on):
 		if self.frame_display:
-			self.frame_display.toggleInspect(inspectOn)
-			self.addr_box.clear()
+			self.frame_display.toggleDecimal(decimal_on)
+		self.decimal_on = decimal_on
+
+	def toggleInspect(self, inspect_on):
+		if self.frame_display:
+			self.frame_display.toggleInspect(inspect_on)
+		self.inspect_on = inspect_on
 
 	def updateFrameDisplay(self, frame):
 		self.current_frame = None
@@ -87,7 +100,7 @@ class FrameWindow(QtGui.QWidget):
 				self.clear()
 
 			self.current_frame = frame
-			self.frame_display = FrameDisplay(frame, self.addr_box)
+			self.frame_display = FrameDisplay(frame, self.addr_box, self.inspect_on, self.decimal_on)
 			self.frame.addWidget(self.frame_display, 1)
 
 			# Check if in main (will be None)

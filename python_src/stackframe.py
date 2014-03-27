@@ -35,11 +35,12 @@ class FrameItem:
 
 class FrameDisplay(QtGui.QTableWidget):
 
-	def __init__(self, frame, addr_box):
+	def __init__(self, frame, addr_box, inspect_on, decimal_on):
 		super(FrameDisplay, self).__init__()
 		self.frame = frame
 		self.addr_box = addr_box
-		self.inspectOn = False
+		self.inspect_on = inspect_on
+		self.decimal_on = decimal_on
 		self.initUI()
 
 	def initUI(self):
@@ -50,18 +51,13 @@ class FrameDisplay(QtGui.QTableWidget):
 		self.setMaximumHeight(self.rowCount()*self.rowHeight(0) + 2)
 		self.highlightStackPointer()
 
-		self.cellClicked.connect(self.cellInspected)
+	def toggleDecimal(self, decimal_on):
+		self.decimal_on = decimal_on
+		self.setAddressBox()
 
-	def toggleInspect(self, inspectOn):
-		self.inspectOn = inspectOn
-
-	def cellInspected(self, row, col):
-		if self.inspectOn:
-			item = self.cellWidget(row, col)
-			if item:
-				self.addr_box.setText(item.statusTip())
-			else:
-				self.addr_box.clear()
+	def toggleInspect(self, inspect_on):
+		self.inspect_on = inspect_on
+		self.setInspectBox()
 
 	def highlightStackPointer(self):
 		for i in range(0, self.rowCount()):
@@ -122,7 +118,30 @@ class FrameDisplay(QtGui.QTableWidget):
 		if row_span > 1:
 			self.setSpan(new_row, 0, row_span, 1)
 
+	def setAddressBox(self):
+		selected = self.selectedIndexes()
+
+		if selected:
+			row = selected[0].row()
+			addr = self.verticalHeaderItem(row).toolTip()
+			if self.decimal_on:
+				addr = "^ " + str(int(str(addr.replace("^ ", "")), 16))
+				self.addr_box.setText(addr)
+			elif not self.inspect_on:
+				self.addr_box.setText(addr)
+	
+	def setInspectBox(self):
+		selected = self.selectedIndexes()
+		
+		if selected:
+			if self.inspect_on:
+				row = selected[0].row()	
+				item = self.cellWidget(row, 0)
+				if item:
+					self.addr_box.setText(item.statusTip())
+				elif not self.decimal_on:
+					self.addr_box.clear()
+
 	def selectionChanged(self, selected, deselected):
-		if not self.inspectOn and len(selected.indexes()) > 0:
-			row = selected.indexes()[0].row()
-			self.addr_box.setText(self.verticalHeaderItem(row).toolTip())
+		self.setAddressBox()
+		self.setInspectBox()

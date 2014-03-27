@@ -21,7 +21,6 @@ class StackWindow(QtGui.QWidget):
 		self.frame_widget = frame_widget
 		self.source_and_assembly_widget = source_and_assembly_widget
 		self.stack = []
-		self.inspectOn = False
 		self.initUI()
 
 	def initUI(self):
@@ -34,14 +33,10 @@ class StackWindow(QtGui.QWidget):
 		self.button_group = QtGui.QButtonGroup()
 		self.button_group.buttonClicked.connect(self.frameSelected)
 
-	def toggleInspect(self, inspectOn):
-		self.inspectOn = inspectOn
-
 	def frameSelected(self):
 		frame_index = self.stack_box.indexOf(self.button_group.checkedButton())
 		frame_index = len(self.stack) - frame_index - 1
 		self.frame_widget.displayFrame(self.stack[frame_index])
-		self.frame_widget.toggleInspect(self.inspectOn)
 		self.source_and_assembly_widget.setLine(self.stack[frame_index].line, self.stack[frame_index].assembly)
 
 	def clear(self):
