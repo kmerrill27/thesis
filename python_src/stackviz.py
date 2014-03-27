@@ -86,7 +86,7 @@ class StackVisualizer(QtGui.QWidget):
 							self.stack_and_frame_widget.addFrame(new_frame)
 					else:
 						# Inside same function
-						frame = self.gdb_process.gdbUpdateCurrentFrame(self.stack_and_frame_widget.getTopFrame())
+						frame = self.gdb_process.gdbUpdateTopFrame(self.stack_and_frame_widget.getTopFrame())
 						self.stack_and_frame_widget.updateFrame(frame)
 
 			elif self.reset:
@@ -178,7 +178,7 @@ class StackVisualizer(QtGui.QWidget):
 			[new_frame, retval] = self.gdb_process.gdbFunctionStep()
 			if new_frame and not self.gdb_process.returningFromMain(new_frame):
 				# "Run" previous frame on stack to function call
-				self.gdb_process.gdbUpdateFrame(self.stack_and_frame_widget.getTopFrame())
+				self.gdb_process.gdbUpdatePreviousFrame(self.stack_and_frame_widget.getTopFrame())
 		elif self.reset:
 			# Start program
 			return [self.gdb_process.gdbInit(), None]
@@ -187,7 +187,7 @@ class StackVisualizer(QtGui.QWidget):
 
 	def finish(self):
 			# Set display to last line of main
-			frame = self.gdb_process.gdbUpdateCurrentFrame(self.stack_and_frame_widget.getTopFrame())
+			frame = self.gdb_process.gdbUpdateTopFrame(self.stack_and_frame_widget.getTopFrame())
 			self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
 			# Run program until end for exit status
 			exit_status = self.gdb_process.gdbFinishUp()

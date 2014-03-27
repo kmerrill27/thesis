@@ -20,6 +20,7 @@ CARAT = "^ "
 CURSOR_SIZE = 24
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 600
+MAIN = "main"
 
 INIT_FILE = "./../gdb/init.gdb"
 

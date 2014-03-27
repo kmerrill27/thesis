@@ -40,10 +40,10 @@ def parseLineAndAssembly(lines):
 	# TODO: error handling
 	return -1
 
-def parseSavedRegisterVal(lines):
+def parseSavedRegisterValue(lines):
 	return regexSearch(PRINT_SAVED_REGISTER_REGEX, lines)
 
-def parseRegisterVal(lines):
+def parseRegisterValue(lines):
 	return regexSearch(PRINT_REGISTER_REGEX, lines)
 
 def parseVarList(lines):

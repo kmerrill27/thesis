@@ -15,11 +15,11 @@ class AssemblyWidget(QtGui.QFrame):
 		self.window = AssemblyWindow()
 		frameWrapVert(self, [self.top_bar, self.window])
 
-	def clear(self):
-		self.window.clear()
-
 	def displayLines(self, lines):
 		self.window.displayLines(lines)
+
+	def clear(self):
+		self.window.clear()
 
 class AssemblyTopBar(QtGui.QWidget):
 	""" Menu bar for assembly widget label """

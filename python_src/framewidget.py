@@ -20,6 +20,9 @@ class FrameWidget(QtGui.QFrame):
 		self.window = FrameWindow(self.addr_box)
 		frameWrapVert(self, [self.top_bar, self.retval_box, self.addr_box, self.window])
 
+	def displayFrame(self, frame):
+		self.window.displayFrame(frame)
+
 	def returned(self, retval):
 		""" Display (possibly void) function return value """
 		if retval:
@@ -32,6 +35,16 @@ class FrameWidget(QtGui.QFrame):
 		self.retval_box.setText(PROGRAM_FINISHED.format(exit_status))
 		self.displayFrame(frame)
 
+	def clear(self):
+		""" Clear frame display and message boxes """
+		self.clearBoxes()
+		self.window.clear()
+
+	def clearBoxes(self):
+		""" Clear message boxes """
+		self.retval_box.clear()
+		self.addr_box.clear()
+
 	def toggleDecimal(self, decimal_on):
 		""" Toggle decimal mode, which displays address as hex or dec """
 		self.window.toggleDecimal(decimal_on)
@@ -39,19 +52,6 @@ class FrameWidget(QtGui.QFrame):
 	def toggleInspect(self, inspectOn):
 		""" Toggle inspect mode, which displays struct zoom values """
 		self.window.toggleInspect(inspectOn)
-
-	def clearBoxes(self):
-		""" Clear message boxes """
-		self.retval_box.clear()
-		self.addr_box.clear()
-
-	def clear(self):
-		""" Clear frame display and message boxes """
-		self.clearBoxes()
-		self.window.clear()
-
-	def displayFrame(self, frame):
-		self.window.displayFrame(frame)
 
 class FrameTopBar(QtGui.QWidget):
 	""" Menu bar for frame widget label """
@@ -86,18 +86,6 @@ class FrameWindow(QtGui.QWidget):
 		self.frame.addStretch()
 		self.setLayout(self.frame)
 
-	def toggleDecimal(self, decimal_on):
-		""" Toggle decimal mode, which displays address as hex or dec """
-		if self.frame_display:
-			self.frame_display.toggleDecimal(decimal_on)
-		self.decimal_on = decimal_on
-
-	def toggleInspect(self, inspect_on):
-		""" Toggle inspect mode, which displays struct zoom values """
-		if self.frame_display:
-			self.frame_display.toggleInspect(inspect_on)
-		self.inspect_on = inspect_on
-
 	def displayFrame(self, frame):
 		""" Display frame items """
 		if self.frame_display != None:
@@ -126,3 +114,15 @@ class FrameWindow(QtGui.QWidget):
 			item.hide()
 			self.frame.removeWidget(item)
 			item.deleteLater()
+
+	def toggleDecimal(self, decimal_on):
+		""" Toggle decimal mode, which displays address as hex or dec """
+		if self.frame_display:
+			self.frame_display.toggleDecimal(decimal_on)
+		self.decimal_on = decimal_on
+
+	def toggleInspect(self, inspect_on):
+		""" Toggle inspect mode, which displays struct zoom values """
+		if self.frame_display:
+			self.frame_display.toggleInspect(inspect_on)
+		self.inspect_on = inspect_on
