@@ -1,6 +1,7 @@
 from widgetwrapper import *
 
 class StackTopBar(QtGui.QWidget):
+	""" Menu bar for stack widget label """
 
 	def __init__(self):
 		super(StackTopBar, self).__init__()
@@ -15,6 +16,7 @@ class StackTopBar(QtGui.QWidget):
 		self.setLayout(box)
 
 class StackWindow(QtGui.QWidget):
+	""" Window for displaying call stack """
 
 	def __init__(self, frame_widget, source_and_assembly_widget):
 		super(StackWindow, self).__init__()
@@ -25,8 +27,7 @@ class StackWindow(QtGui.QWidget):
 
 	def initUI(self):
 		self.stack_box = QtGui.QVBoxLayout()
-		# This adds 1 to the count of stack_box
-		self.stack_box.addStretch()
+		self.stack_box.addStretch() # This adds 1 to the count of stack_box
 		self.stack_box.setSpacing(2)
 		self.setLayout(self.stack_box)
 
@@ -39,25 +40,8 @@ class StackWindow(QtGui.QWidget):
 		self.frame_widget.displayFrame(self.stack[frame_index])
 		self.source_and_assembly_widget.setLine(self.stack[frame_index].line, self.stack[frame_index].assembly)
 
-	def clear(self):
-		self.frame_widget.clear()
-		for button in self.button_group.buttons():
-			self.removeButton(button)
-		# First item is stretch - do not remove
-		for i in range (1, self.stack_box.count()):
-			self.stack_box.itemAt(i).widget().close()
-			self.stack_box.takeAt(i)
-		self.stack = []
-
-	def getTopFrame(self):
-		return self.stack[-1]
-
-	def setToMainFrame(self):
-		not_on_last_frame = True
-		while (not_on_last_frame):
-			not_on_last_frame = self.removeFrame()
-
-	def addFrame(self, frame):
+	def pushFrame(self, frame):
+		""" Add frame to top of stack """
 		self.frame_widget.clearBoxes()
 
 		frame_button = QtGui.QPushButton(frame.title)
@@ -73,26 +57,40 @@ class StackWindow(QtGui.QWidget):
 
 		self.frameSelected()
 
-	def removeFrame(self):
+	def popFrame(self):
+		""" Remove top frame on stack """
+		# Number of frames should be the same as the number of buttons in stack display
 		assert len(self.stack) == self.stack_box.count()-1
 
 		if len(self.stack) > 1:
-			# Top frame was the active frame
 			self.removeButton(self.stack_box.itemAt(0).widget())
 			self.stack.pop()
 
+			# Select new top frame
 			self.stack_box.itemAt(0).widget().setChecked(True)
 			self.frameSelected()
-
 			return True
 
-		# Return false if on last frame
+		# On main frame - do not remove
 		return False
 
+	def peekFrame(self):
+		""" Return top frame on stack """
+		return self.stack[-1]
+
+	def clear(self):
+		""" Remove all frames from display """
+		self.frame_widget.clear()
+		for button in self.button_group.buttons():
+			self.removeButton(button)
+
+		for i in range (1, self.stack_box.count()): # First item is stretch - do not remove
+			self.stack_box.itemAt(i).widget().close()
+			self.stack_box.takeAt(i)
+		self.stack = []
+
 	def removeButton(self, button):
-		was_checked = button == self.button_group.checkedButton()
+		""" Remove frame button from stack display """
 		self.stack_box.removeWidget(button)
 		self.button_group.removeButton(button)
 		button.close()
-
-		return was_checked

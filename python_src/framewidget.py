@@ -1,5 +1,4 @@
 from stackframe import *
-from widgetwrapper import *
 
 class FrameWidget(QtGui.QFrame):
 	""" Widget for displaying selected stack frame """
@@ -21,6 +20,7 @@ class FrameWidget(QtGui.QFrame):
 		frameWrapVert(self, [self.top_bar, self.retval_box, self.addr_box, self.window])
 
 	def displayFrame(self, frame):
+		""" Display stack frame in window """
 		self.window.displayFrame(frame)
 
 	def returned(self, retval):
@@ -102,6 +102,7 @@ class FrameWindow(QtGui.QWidget):
 			self.frame.addWidget(self.base_label)
 
 	def clear(self):
+		""" Clear display """
 		self.removeItem(self.frame_display)
 		self.removeItem(self.base_label)
 		self.addr_box.clear()
@@ -110,6 +111,7 @@ class FrameWindow(QtGui.QWidget):
 		self.base_label = None
 
 	def removeItem(self, item):
+		""" Remove frame item from display """
 		if item:
 			item.hide()
 			self.frame.removeWidget(item)

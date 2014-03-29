@@ -1,6 +1,4 @@
 from defs import *
-from PyQt4 import QtCore
-from PyQt4 import QtGui
 from widgetwrapper import *
 
 class AssemblyWidget(QtGui.QFrame):
@@ -16,9 +14,11 @@ class AssemblyWidget(QtGui.QFrame):
 		frameWrapVert(self, [self.top_bar, self.window])
 
 	def displayLines(self, lines):
+		""" Display assembly instructions in window """
 		self.window.displayLines(lines)
 
 	def clear(self):
+		""" Clear display """
 		self.window.clear()
 
 class AssemblyTopBar(QtGui.QWidget):
@@ -43,11 +43,9 @@ class AssemblyWindow(QtGui.QListWidget):
 		super(AssemblyWindow, self).__init__()
 
 	def displayLines(self, lines):
+		""" Display assembly instructions """
 		self.clear()
 		self.addItems(lines)
-
-	def highlightLine(self, line_num):
-		self.setCurrentRow(line_num)
 
 	def keyPressEvent(self, event):
 		""" Override to disallow user from selecting line """

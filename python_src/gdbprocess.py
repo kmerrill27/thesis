@@ -1,7 +1,6 @@
 import pexpect
 
-from arch import *
-from defs import *
+from gdbdefs import *
 from parse import *
 from stackframe import *
 
@@ -11,13 +10,15 @@ class GDBProcess:
 	def __init__(self):
 		self.process = None
 		self.architecture = None
-		self.started = False
+		self.started = False # Whether program has started execution
+		self.finished = False # Whether program has exited
 		self.mainBreakpoint = -1
 		self.empty_frame = StackFrame(None, None, None, None, None, None, None)
 
 	def gdbInit(self):
 		""" Start new gdb process """
 		self.started = False
+		self.finished = False
 		return self.startProcess()
 
 	def gdbLineStep(self):
@@ -37,7 +38,7 @@ class GDBProcess:
 			self.process.sendline(FUNCTION_STEP)
 			self.process.expect(GDB_PROMPT)
 
-			if parseInMainCheck(self.process.before.strip()):
+			if parseFunctionStepInMainCheck(self.process.before.strip()):
 				# In main - "finish" command not valid so run "continue"
 				self.process.sendline(CONTINUE)
 				self.process.expect(GDB_PROMPT)
@@ -45,7 +46,7 @@ class GDBProcess:
 					# Hit breakpoint at main exit
 					return [self.empty_frame, None]
 			else:
-				[returned, val] = parseReturnCheck(self.process.before.strip())
+				[returned, val] = parseFunctionStepReturnCheck(self.process.before.strip())
 
 				if returned:
 					# Returned from function call with (possibly void) val
@@ -72,12 +73,14 @@ class GDBProcess:
 		if self.process:
 			self.process.close()
 			self.process = None
+			self.finished = False
 
 	def gdbFinishUp(self):
 		""" Run process through exit and return exit status """
+		self.finished = True
 		self.process.sendline(CONTINUE)
 		self.process.expect(GDB_PROMPT)
-		return parseExitCode(self.process.before.strip())
+		return parseExitStatus(self.process.before.strip())
 
 	def gdbUpdateTopFrame(self, frame):
 		""" Update uppermost frame on stack """
@@ -105,7 +108,7 @@ class GDBProcess:
 		self.process.expect(BASH_PROMPT)
 
 		# Command file sets breakpoints at start of all functions
-		self.process.sendline(GDB_INIT_CMD.format(INIT_FILE, C_OUT))
+		self.process.sendline(GDB_INIT_CMD.format(GDB_INIT_SCRIPT, C_OUT))
 		self.process.expect(GDB_PROMPT)
 
 		# 32- or 64-bit x86
@@ -158,8 +161,7 @@ class GDBProcess:
 
 		if bits:
 			# Save as 32- or 64-bit for accessing registers
-			self.architecture = MachineArchitecture()
-			self.architecture.setArchitecture(int(bits))	
+			self.architecture = MachineArchitecture(int(bits))	
 
 	def setMainBreakpoint(self):
 		""" Set breakpoint at return in main and return breakpoint number """
@@ -174,10 +176,10 @@ class GDBProcess:
 				break
 
 		# Get address of line right before main exit
-		pop_addr = parsePopAddress(self.process.before.strip())
+		main_addr = parseMainReturnAddress(self.process.before.strip())
 
 		# Set breakpoint right before main exit and save breakpoint number
-		self.process.sendline(BREAK_ADDR.format(pop_addr))
+		self.process.sendline(BREAK_ADDR.format(main_addr))
 		self.process.expect(GDB_PROMPT)
 		self.mainBreakpoint = parseSetBreakpointNum(self.process.before.strip())
 
@@ -272,7 +274,7 @@ class GDBProcess:
 			frame_item = FrameItem()
 
 			frame_item.addr = reg.addr
-			frame_item.length = reg.length
+			frame_item.length = self.architecture.reg_length
 			frame_item.initialized = True # saved registers are always initialized
 			frame_item.value = self.getSavedRegisterValue(reg.title)
 			frame_item.zoom_val = frame_item.value
@@ -291,11 +293,11 @@ class GDBProcess:
 		""" Get function title, base address, and saved registers """
 		self.process.sendline(INFO_FRAME)
 		self.process.expect(GDB_PROMPT)
-		return parseFrameInfo(self.process.before.strip(), self.architecture.reg_length)
+		return parseFrameInfo(self.process.before.strip())
 
 	def getLineAndAssembly(self):
 		""" Get current source line number and corresponding assembly instructions """
-		self.process.sendline(SRC_LINE)
+		self.process.sendline(INFO_LINE)
 		self.process.expect(GDB_PROMPT)
 		[line, assembly_start, assembly_end] = parseLineAndAssembly(self.process.before.strip())
 		
@@ -343,5 +345,5 @@ class GDBProcess:
 		# Return to top frame
 		self.process.sendline(NEXT_FRAME)
 		self.process.expect(GDB_PROMPT)
-		
+
 		return val

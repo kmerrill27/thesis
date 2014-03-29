@@ -1,13 +1,11 @@
-from defs import *
 from gdbprocess import *
 from sourceandassemblywidget import *
-from stackandframewidget import *
 
-class StackVisualizer(QtGui.QWidget):
+class StackExplorerWidget(QtGui.QWidget):
 	""" Central StackExplorer widget for controlling all user interaction """
 
 	def __init__(self):
-		super(StackVisualizer, self).__init__()
+		super(StackExplorerWidget, self).__init__()
 		self.initUI()
 
 	def initUI(self):
@@ -15,8 +13,8 @@ class StackVisualizer(QtGui.QWidget):
 		self.gdb_process = GDBProcess()
 
 		# Initialize widget views
-		self.source_and_assembly_widget = SourceAndAssemblyWidget()
-		self.stack_and_frame_widget = StackAndFrameWidget(self.gdb_process, self.source_and_assembly_widget)
+		self.source_and_assembly_widget = SourceAndAssemblyWidget(self.gdb_process)
+		self.stack_and_frame_widget = StackAndFrameWidget(self.source_and_assembly_widget)
 		self.source_and_assembly_widget.setStackAndFrameWidget(self.stack_and_frame_widget)
 
 		self.toolbar = QtGui.QToolBar()
@@ -33,6 +31,7 @@ class StackVisualizer(QtGui.QWidget):
 		self.setLayout(grid)
 
 	def setupToolbar(self):
+		""" Add user execution control actions to main app toolbar """
 		self.addSpacer()
 		# On Mac OS X, Ctrl corresponds to Command key
 		self.setupAction("Line step", LINE_ICON, "Right", self.lineStep, False)
@@ -41,6 +40,7 @@ class StackVisualizer(QtGui.QWidget):
 		self.setupAction("Reset", RESET_ICON, "Ctrl+Left", self.reset, False)
 
 	def setupAction(self, name, icon, shortcut, handler, checkable):
+		""" Add user action to main app toolbar """
 		action = QtGui.QAction(QtGui.QIcon(icon), name, self)
 		action.setShortcut(QtGui.QKeySequence(shortcut))
 		action.setStatusTip(name)
@@ -58,13 +58,14 @@ class StackVisualizer(QtGui.QWidget):
 		return action
 
 	def addSpacer(self):
-		# Add space block between toolbar elements
+		""" Add space block between toolbar elements """
 		spacer = QtGui.QWidget()
 		spacer.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 		self.toolbar.addWidget(spacer)
 
 	def lineStep(self):
-		if not self.stack_and_frame_widget.finished and self.source_and_assembly_widget.isSource():
+		""" Step into current program's next source line """
+		if not self.gdb_process.finished and self.source_and_assembly_widget.isSource():
 
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
@@ -83,21 +84,22 @@ class StackVisualizer(QtGui.QWidget):
 						else:
 							# Stepped into different function
 							new_frame = self.gdb_process.functionSetup()
-							self.stack_and_frame_widget.addFrame(new_frame)
+							self.stack_and_frame_widget.pushFrame(new_frame)
 					else:
 						# Inside same function
 						frame = self.gdb_process.gdbUpdateTopFrame(self.stack_and_frame_widget.getTopFrame())
-						self.stack_and_frame_widget.updateFrame(frame)
+						self.stack_and_frame_widget.updateTopFrame(frame)
 
 			elif self.reset:
 				# Start program
 				new_frame = self.gdb_process.gdbInit()
-				self.stack_and_frame_widget.addFrame(new_frame)
+				self.stack_and_frame_widget.pushFrame(new_frame)
 
 			QtGui.QApplication.restoreOverrideCursor()
 
 	def functionStep(self):
-		if not self.stack_and_frame_widget.finished and self.source_and_assembly_widget.isSource():
+		""" Step into current program's next function call """
+		if not self.gdb_process.finished and self.source_and_assembly_widget.isSource():
 
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
@@ -108,7 +110,7 @@ class StackVisualizer(QtGui.QWidget):
 				self.finish()
 			elif new_frame:
 				# Stepped into function
-				self.stack_and_frame_widget.addFrame(new_frame)
+				self.stack_and_frame_widget.pushFrame(new_frame)
 			else:
 				# Returned from function
 				self.stack_and_frame_widget.returned(retval)
@@ -116,13 +118,14 @@ class StackVisualizer(QtGui.QWidget):
 		QtGui.QApplication.restoreOverrideCursor()
 
 	def run(self):
-		if not self.stack_and_frame_widget.finished and self.source_and_assembly_widget.isSource():
+		""" Run current program to exit """
+		if not self.gdb_process.finished and self.source_and_assembly_widget.isSource():
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
 			# Restart program and add main frame
 			self.reset()
 			new_frame = self.gdb_process.startProcess()
-			self.stack_and_frame_widget.addFrame(new_frame)
+			self.stack_and_frame_widget.pushFrame(new_frame)
 
 			# Run program until end and update display
 			self.gdb_process.gdbRun()
@@ -131,16 +134,43 @@ class StackVisualizer(QtGui.QWidget):
 			QtGui.QApplication.restoreOverrideCursor()
 
 	def reset(self):
+		""" Reset current program execution to start """
 		if self.source_and_assembly_widget.isSource():
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
 			# Clear all widgets and reset gdb process
-			self.stack_and_frame_widget.reset()
+			self.gdb_process.gdbReset()
+			self.stack_and_frame_widget.clear()
 			self.source_and_assembly_widget.clear()
 
 			QtGui.QApplication.restoreOverrideCursor()
 
+	def getNextFrame(self):
+		""" Make next function call and populate new stack frame """
+		if self.gdb_process.process:
+			# Program has already started
+			[new_frame, retval] = self.gdb_process.gdbFunctionStep()
+			if new_frame and not self.gdb_process.returningFromMain(new_frame):
+				# "Run" previous frame on stack to function call
+				self.gdb_process.gdbUpdatePreviousFrame(self.stack_and_frame_widget.peekFrame())
+		elif self.reset:
+			# Start program
+			return [self.gdb_process.gdbInit(), None]
+
+		return [new_frame, retval]
+
+	def finish(self):
+		""" Finish current program execution and exit """
+		# Set display to last line of main
+		frame = self.gdb_process.gdbUpdateTopFrame(self.stack_and_frame_widget.peekFrame())
+		self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
+		# Run program until end for exit status
+		exit_status = self.gdb_process.gdbFinishUp()
+		# Display exit status
+		self.stack_and_frame_widget.finish(exit_status, frame)
+
 	def toggleDecimal(self, checked):
+		""" Toggle decimal mode, which displays address as hex or dec """
 		if not checked:
 			# Deselect decimal
 			QtGui.QApplication.restoreOverrideCursor()
@@ -157,6 +187,7 @@ class StackVisualizer(QtGui.QWidget):
 			self.stack_and_frame_widget.toggleDecimal(True)
 
 	def toggleInspect(self, checked):
+		""" Toggle inspect mode, which displays struct zoom values """
 		if not checked:
 			# Deselect inspect
 			QtGui.QApplication.restoreOverrideCursor()
@@ -172,30 +203,8 @@ class StackVisualizer(QtGui.QWidget):
 			QtGui.QApplication.setOverrideCursor(self.inspect_cursor)
 			self.stack_and_frame_widget.toggleInspect(True)
 
-	def getNextFrame(self):
-		if self.gdb_process.process:
-			# Program has already started
-			[new_frame, retval] = self.gdb_process.gdbFunctionStep()
-			if new_frame and not self.gdb_process.returningFromMain(new_frame):
-				# "Run" previous frame on stack to function call
-				self.gdb_process.gdbUpdatePreviousFrame(self.stack_and_frame_widget.getTopFrame())
-		elif self.reset:
-			# Start program
-			return [self.gdb_process.gdbInit(), None]
-
-		return [new_frame, retval]
-
-	def finish(self):
-			# Set display to last line of main
-			frame = self.gdb_process.gdbUpdateTopFrame(self.stack_and_frame_widget.getTopFrame())
-			self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
-			# Run program until end for exit status
-			exit_status = self.gdb_process.gdbFinishUp()
-			# Display exit status and set self.stack_and_frame_widget.finished to True
-			self.stack_and_frame_widget.finish(exit_status, frame)
-
 	def getCursor(self, icon):
-		# Create custom cursor from image file
+		""" Create custom cursor from image file """
 		img = QtGui.QImage(icon)
 		pixmap = QtGui.QPixmap.fromImage(img)
 		pixmap = pixmap.scaled(CURSOR_SIZE, CURSOR_SIZE, QtCore.Qt.KeepAspectRatio)

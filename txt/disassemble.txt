@@ -1,9 +1,0 @@
-
-Breakpoint 1, factorial (n=5) at fact_rec.c:22
-22	 	if (n == 0 || n == 1)
-=> 0x0000000100000eab <factorial+11>:	8b 45 fc	mov    -0x4(%rbp),%eax
-   0x0000000100000eae <factorial+14>:	83 f8 00	cmp    $0x0,%eax
-   0x0000000100000eb1 <factorial+17>:	74 08	je     0x100000ebb <factorial+27>
-   0x0000000100000eb3 <factorial+19>:	8b 45 fc	mov    -0x4(%rbp),%eax
-   0x0000000100000eb6 <factorial+22>:	83 f8 01	cmp    $0x1,%eax
-   0x0000000100000eb9 <factorial+25>:	75 09	jne    0x100000ec4 <factorial+36>
