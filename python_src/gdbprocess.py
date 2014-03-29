@@ -286,6 +286,11 @@ class GDBProcess:
 			elif reg.title == self.architecture.instr_pointer:
 				# Set title for return address
 				frame_item.title = RETURN_ADDRESS
+				base_addr = parseReturnAddress(frame_item.value)
+				self.process.sendline(INSTR_AT_ADDR.format(base_addr))
+				self.process.expect(GDB_PROMPT)
+				# Zoom value of return address is corresponding assembly instruction
+				frame_item.zoom_val = parseInstruction(self.process.before)
 			
 			frame.addItem(frame_item)
 

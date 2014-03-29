@@ -14,6 +14,7 @@ class StackFrame:
 		self.line = line # Current source line
 		self.assembly = assembly # Current assembly instructions
 		self.items = [] # Items are symbols, saved registers, etc.
+		self.selected_row = 0 # Item selected
 
 	def addItem(self, frame_item):
 		""" Add item to top of frame """
@@ -49,7 +50,6 @@ class FrameDisplay(QtGui.QTableWidget):
 		self.show()
 		# Set height to height of items so no whitespace
 		self.setMaximumHeight(self.rowCount()*self.rowHeight(0) + 2)
-		self.highlightStackPointer()
 
 	def show(self):
 		""" Display all items in stack frame """
@@ -61,6 +61,8 @@ class FrameDisplay(QtGui.QTableWidget):
 
 		for item in sorted_list:
 			self.displayItem(item)
+
+		self.selectRow(self.frame.selected_row)
 
 	def displayItem(self, frame_item):
 		""" Display item, which is a symbol, saved register, etc. """
@@ -79,7 +81,7 @@ class FrameDisplay(QtGui.QTableWidget):
 		for i in range(0, row_span):
 			# Set item to take up number of rows corresponding to its length
 			self.insertRow(self.rowCount())
-			header = QtGui.QTableWidgetItem("")
+			header = QtGui.QTableWidgetItem("					") # Set so empty items have width
 			# Set tooltip to address of item
 			header.setToolTip(CARAT + str(hex(int(frame_item.addr, 16) + 4*i)))
 			self.setVerticalHeaderItem(self.rowCount() - 1, header)
@@ -104,10 +106,13 @@ class FrameDisplay(QtGui.QTableWidget):
 
 	def selectionChanged(self, selected, deselected):
 		""" Frame item (row in table) selected """
-		if self.inspect_on:
-			self.setInspectBox()
-		else:
-			self.setAddressBox()
+		selections = selected.indexes()
+		if selections:
+			self.frame.selected_row = selections[0].row()
+			if self.inspect_on:
+				self.setInspectBox()
+			else:
+				self.setAddressBox()
 
 	def addTempStorageSpace(self, last_addr):
 		""" Add empty temporary storage space to reach top of frame """
@@ -125,45 +130,30 @@ class FrameDisplay(QtGui.QTableWidget):
 			if self.frame.stack_ptr == curr_addr:
 				header.setText(self.frame.architecture.stack_pointer)
 
-	def highlightStackPointer(self):
-		""" Select row at stack pointer address """
-		for i in range(0, self.rowCount()):
-			header_text = self.verticalHeaderItem(i).text()
-			if header_text and self.frame.architecture.stack_pointer in header_text:
-				self.selectRow(i)
-
 	def setAddressBox(self):
 		""" Set message in box to item address """
-		selected = self.selectedIndexes()
-
-		if selected:
-			row = selected[0].row()
-			addr = self.verticalHeaderItem(row).toolTip()
-			if self.decimal_on:
-				# Display address as decimal
-				addr = CARAT + str(int(str(addr.replace(CARAT, "")), 16))
-				self.addr_box.setText(addr)
-			else:
-				# Display address as hex
-				self.addr_box.setText(addr)
+		addr = self.verticalHeaderItem(self.frame.selected_row).toolTip()
+		if self.decimal_on:
+			# Display address as decimal
+			addr = CARAT + str(int(str(addr.replace(CARAT, "")), 16))
+			self.addr_box.setText(addr)
+		else:
+			# Display address as hex
+			self.addr_box.setText(addr)
 	
 	def setInspectBox(self):
 		""" Set message in box to item zoom value """
-		selected = self.selectedIndexes()
-		
-		if selected:
-			if self.inspect_on:
-				row = selected[0].row()	
-				item = self.cellWidget(row, 0)
-				if item:
-					# Display item zoom value
-					self.addr_box.setText(item.statusTip())
-				else:
-					# No item at address
-					self.addr_box.clear()
+		if self.inspect_on:
+			item = self.cellWidget(self.frame.selected_row, 0)
+			if item:
+				# Display item zoom value
+				self.addr_box.setText(item.statusTip())
 			else:
-				# If inspect off, display address
-				self.setAddressBox()
+				# No item at address
+				self.addr_box.clear()
+		else:
+			# If inspect off, display address
+			self.setAddressBox()
 
 	def toggleDecimal(self, decimal_on):
 		""" Toggle decimal mode, which displays address as hex or dec """

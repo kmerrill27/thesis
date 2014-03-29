@@ -1,4 +1,5 @@
 import re
+import string
 
 from defs import *
 from parsedefs import *
@@ -87,6 +88,10 @@ def parseStructCheck(value):
 		# Symbol is not a struct
 		return [NON_STRUCT, value]
 
+def parseInstruction(lines):
+	""" Get single assembly instruction from x/i command """
+	return string.join(regexSearch(ASSEMBLY_INSTR_REGEX, lines).split(), "   ")
+
 def parseSetBreakpointNum(lines):
 	""" Get number of just set breakpoint """
 	return regexSearch(BREAKPOINT_NUM_REGEX, lines)
@@ -94,6 +99,10 @@ def parseSetBreakpointNum(lines):
 def parseHitBreakpointNum(lines):
 	""" Get number of just hit breakpoint """
 	return regexSearch(BREAKPOINT_HIT_REGEX, lines)
+
+def parseReturnAddress(addr):
+	""" Get address from address pointer definition """
+	return regexSearch(RET_ADDR_REGEX, addr)
 
 def parseMainReturnAddress(lines):
 	""" Get address of instruction right before retq """

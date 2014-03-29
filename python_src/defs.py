@@ -40,7 +40,7 @@ FUNCTION_ICON = "./../static/double_arrow.png"
 RUN_ICON = "./../static/run.png"
 RESET_ICON = "./../static/reset.png"
 INSPECT_ICON = "./../static/inspect.png"
-DECIMAL_ICON = "./../static/123.png"
+DECIMAL_ICON = "./../static/convert.png"
 
 NULL_VAL = 0
 UNINITIALIZED = "null"

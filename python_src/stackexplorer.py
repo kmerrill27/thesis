@@ -103,7 +103,7 @@ class StackExplorerWidget(QtGui.QWidget):
 
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
-			[new_frame, retval] = self.getNextFrame()
+			[new_frame, retval] = self.setUpNextFrame()
 
 			if self.gdb_process.returningFromMain(new_frame):
 				# No more function calls - hit return breakpoint in main
@@ -145,7 +145,7 @@ class StackExplorerWidget(QtGui.QWidget):
 
 			QtGui.QApplication.restoreOverrideCursor()
 
-	def getNextFrame(self):
+	def setUpNextFrame(self):
 		""" Make next function call and populate new stack frame """
 		if self.gdb_process.process:
 			# Program has already started

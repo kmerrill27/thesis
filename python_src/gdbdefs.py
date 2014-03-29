@@ -16,6 +16,7 @@ FUNCTION_STEP = "finish"
 
 BREAK_ADDR = "break *{0}"
 REMOVE_BR = "del"
+INSTR_AT_ADDR = "x/i {0}"
 
 INFO_TARGET = "info target"
 INFO_LINE = "info line"
