@@ -100,7 +100,9 @@ class FrameWindow(QtGui.QWidget):
 			self.frame.setDirection(QtGui.QBoxLayout.TopToBottom)
 		
 		if self.current_frame:
+			reverse_row = self.frame_display.rowCount() - 1 - self.current_frame.selected_row 
 			self.displayFrame(self.current_frame)
+			self.frame_display.selectRow(reverse_row)
 
 	def displayFrame(self, frame):
 		""" Display frame items """

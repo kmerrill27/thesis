@@ -67,11 +67,11 @@ class FrameDisplay(QtGui.QTableWidget):
 
 		for item in sorted_list:
 			item_addr = int(item.addr, 16)
-			if last_addr and last_addr < item_addr - int(item.length):
+			if last_addr and last_addr < item_addr:
 				# Add any empty space between items
 				self.addTempStorageSpace(item_addr, last_addr)
 
-			last_addr = self.displayItem(item)
+			last_addr = self.displayItem(item) + 4
 
 		self.selectRow(self.frame.selected_row)
 
@@ -110,7 +110,7 @@ class FrameDisplay(QtGui.QTableWidget):
 
 		for i in range(0, row_span):
 			self.insertRow(self.rowCount())
-			last_addr = hex(int(frame_item.addr, 16) + 4 * abs(offset-i))
+			last_addr = hex(int(frame_item.addr, 16) + 4 * abs(offset - i))
 			header = QtGui.QTableWidgetItem(HEADER_BLANK) # Add blank space to give header width
 			header.setToolTip(caret + str(last_addr))
 			self.setVerticalHeaderItem(self.rowCount() - 1, header)
@@ -126,7 +126,11 @@ class FrameDisplay(QtGui.QTableWidget):
 		""" Frame item (row in table) selected """
 		selections = selected.indexes()
 		if selections:
-			self.frame.selected_row = selections[0].row()
+			if self.reverse:
+				# Lowest addressed header item corresponds to spanning item
+				self.frame.selected_row = selections[-1].row()
+			else:
+				self.frame.selected_row = selections[0].row()
 
 			if self.inspect_on:
 				self.setInspectBox()
@@ -177,10 +181,10 @@ class FrameDisplay(QtGui.QTableWidget):
 			self.setVerticalHeaderItem(self.rowCount() - 1, header)
 
 			if self.reverse:
-				curr_addr = hex(low_addr + 4*(temp_space - 1 - i))
+				curr_addr = hex(low_addr + 4 * (temp_space - 1 - i))
 				header.setToolTip(DOWN_CARET + str(curr_addr))
 			else:
-				curr_addr = hex(low_addr + 4*i)
+				curr_addr = hex(low_addr + 4 * i)
 				header.setToolTip(CARET + str(curr_addr))
 
 			# Display stack pointer at its address
@@ -204,13 +208,17 @@ class FrameDisplay(QtGui.QTableWidget):
 	def setInspectBox(self):
 		""" Set message in box to item zoom value """
 		if self.inspect_on:
-			item = self.cellWidget(self.frame.selected_row, 0)
-			if item:
-				# Display item zoom value
-				self.addr_box.setText(item.statusTip())
-			else:
-				# No item at address
-				self.addr_box.clear()
+			for i in range(0, self.rowSpan(self.frame.selected_row, 0)):
+				# Find row with widget in span
+				item = self.cellWidget(self.frame.selected_row - i, 0)
+
+				if item:
+					# Display item zoom value
+					self.addr_box.setText(item.statusTip())
+					return
+			
+			# No item at address
+			self.addr_box.clear()
 		else:
 			# If inspect off, display address
 			self.setAddressBox()
