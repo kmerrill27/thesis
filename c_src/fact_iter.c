@@ -19,13 +19,11 @@
 
  int factorial(int n)
  {
- 	int last_fact = 1;
- 	int curr_fact = n;
+ 	int curr_fact = 1;
 
  	while(n > 1)
  	{
- 		curr_fact = last_fact * n;
- 		last_fact = curr_fact;
+ 		curr_fact = curr_fact * n;
  		n--;
  	}
 

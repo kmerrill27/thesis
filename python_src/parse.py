@@ -104,7 +104,7 @@ def parseReturnAddress(addr):
 	""" Get address from address pointer definition """
 	return regexSearch(RET_ADDR_REGEX, addr)
 
-def parseMainReturnAddress(lines):
+def parseReturnInstrAddress(lines):
 	""" Get address of instruction right before retq """
 	return regexSearch(POP_ADDR_REGEX, lines)
 
@@ -112,24 +112,13 @@ def parseExitStatus(lines):
 	""" Get exit status of completed program execution """
 	return regexSearch(EXIT_REGEX, lines)
 
-def parseFunctionStepInMainCheck(lines):
-	""" For function step only: check if function in main """
-	return re.search(IN_MAIN, lines)
+def parseFunctionNames(lines):
+	""" Get all source file function names from 'info functions' call """
+	return regexFindAll(FUNCTION_NAME_REGEX, lines)
 
-def parseFunctionStepReturnCheck(lines):
-	""" For function step only: check if function returned """
-	retval = regexSearch(RETURN_REGEX, lines)
-	# Returned with value
-	if retval:
-		return [True, retval]
-
-	hitBreakpoint = re.search(BREAKPOINT_REGEX, lines)
-	# Did not return
-	if hitBreakpoint:
-		return [False, None]	
-
-	# Returned with no value
-	return [True, None]
+def parseFunctionStepReturnValue(lines):
+	""" Get (possibly void) return value from 'finish' call """
+	return regexSearch(RETURN_REGEX, lines)
 
 def regexSearch(regex, lines):
 	""" Get first match for regex """

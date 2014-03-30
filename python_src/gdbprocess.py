@@ -12,8 +12,8 @@ class GDBProcess:
 		self.architecture = None
 		self.started = False # Whether program has started execution
 		self.finished = False # Whether program has exited
-		self.mainBreakpoint = -1
-		self.empty_frame = StackFrame(None, None, None, None, None, None, None)
+		self.main_breakpoint_num = None
+		self.return_breakpoints = []
 
 	def gdbInit(self):
 		""" Start new gdb process """
@@ -21,48 +21,44 @@ class GDBProcess:
 		self.finished = False
 		return self.startProcess()
 
-	def gdbLineStep(self):
+	def gdbLineStep(self, frame):
 		""" Advance one source line """
 		self.process.sendline(LINE_STEP)
 		self.process.expect(GDB_PROMPT)
-		return parseLineStepCheck(self.process.before.strip())
+
+		break_num = parseHitBreakpointNum(self.process.before.strip())
+		if not break_num:
+			# Inside same function
+			return [self.gdbUpdateTopFrame(frame), None, False]
+		elif break_num in self.return_breakpoints:
+			# Returned from function
+			return self.functionReturnSetup(break_num)
+
+		# Stepped into new function
+		return [self.functionSetup(), break_num, False]
 
 	def gdbFunctionStep(self):
 		""" Advance one function call """
-		if not self.started:
-			# First function call out of main
-			self.started = True
-			self.process.sendline(CONTINUE)
-			self.process.expect(GDB_PROMPT)
-		else:
-			self.process.sendline(FUNCTION_STEP)
-			self.process.expect(GDB_PROMPT)
+		self.process.sendline(CONTINUE)
+		self.process.expect(GDB_PROMPT)
 
-			if parseFunctionStepInMainCheck(self.process.before.strip()):
-				# In main - "finish" command not valid so run "continue"
-				self.process.sendline(CONTINUE)
-				self.process.expect(GDB_PROMPT)
-				if self.hitFinalBreakpoint(parseHitBreakpointNum(self.process.before.strip())):
-					# Hit breakpoint at main exit
-					return [self.empty_frame, None]
-			else:
-				[returned, val] = parseFunctionStepReturnCheck(self.process.before.strip())
-
-				if returned:
-					# Returned from function call with (possibly void) val
-					return [None, val]
+		break_num = parseHitBreakpointNum(self.process.before.strip())
+		if break_num in self.return_breakpoints:
+			# Returned from function
+			return self.functionReturnSetup(break_num)
 
 		# Stepped into new function
-		return [self.functionSetup(), None]
+		return [self.functionSetup(), None, False]	
 
 	def gdbRun(self):
 		""" Run program to completion """
-		# Remove all breakpoints
-		self.process.sendline(REMOVE_BR)
+		# Disable all breakpoints
+		self.process.sendline(DISABLE_ALL_BREAKPOINTS)
 		self.process.expect(GDB_PROMPT)
 
-		# Reset main breakpoint
-		self.setMainBreakpoint()
+		# Re-enable main return breakpoint
+		self.process.sendline(ENABLE_BREAKPOINT.format(self.main_breakpoint_num))
+		self.process.expect(GDB_PROMPT)
 
 		# Run program to end
 		self.process.sendline(CONTINUE)
@@ -73,6 +69,8 @@ class GDBProcess:
 		if self.process:
 			self.process.close()
 			self.process = None
+			self.main_breakpoint_num = None
+			self.return_breakpoints = []
 			self.finished = False
 
 	def gdbFinishUp(self):
@@ -104,6 +102,7 @@ class GDBProcess:
 
 	def startProcess(self):
 		""" Set up bash process and open gdb session with compiled program """
+		self.started = True
 		self.process = pexpect.spawn('bash')
 		self.process.expect(BASH_PROMPT)
 
@@ -114,14 +113,39 @@ class GDBProcess:
 		# 32- or 64-bit x86
 		self.setArchitecture()
 
-		# Set breakpoint right before return from main to detect program completion
-		self.setMainBreakpoint()
+		# Set and disable breakpoints at function returns
+		# Main return breakpoint left enabled
+		self.setReturnBreakpoints()
 
 		# Run until enters main
 		self.process.sendline(RUN)
 		self.process.expect(GDB_PROMPT)
 
 		return self.mainSetup()
+
+	def setReturnBreakpoints(self):
+		""" Set breakpoints right before exit of all functions """
+		# Get all function names in source file
+		self.process.sendline(INFO_FUNCTIONS)
+		self.process.expect(GDB_PROMPT)
+		functions = parseFunctionNames(self.process.before.strip())
+
+		for function in functions:
+			self.process.sendline(DISAS_FUNCTION.format(function))
+
+			# Get address of line right before function exit
+			addr = parseReturnInstrAddress(self.returnToContinue())
+
+			# Set breakpoint right before function exit and save breakpoint number
+			self.process.sendline(BREAK_ADDR.format(addr))
+			self.process.expect(GDB_PROMPT)
+			num = parseSetBreakpointNum(self.process.before.strip())
+
+			if function == MAIN:
+				# Save main return breakpoint
+				self.main_breakpoint_num = num
+
+			self.return_breakpoints.append(num)
 
 	def mainSetup(self):
 		""" Set up initial stack frame for main """
@@ -151,6 +175,32 @@ class GDBProcess:
 
 		return frame
 
+	def functionReturnSetup(self, break_num):
+		""" Set up process returning from a function """
+		if self.main_breakpoint_num == break_num:
+			# Hit breakpoint at main exit
+			return [None, None, True]
+
+		# Hit breakpoint at function exit - finish up function
+		self.process.sendline(FUNCTION_STEP)
+		self.process.expect(GDB_PROMPT)
+
+		return [None, parseFunctionStepReturnValue(self.process.before.strip()), False]
+
+	def returnToContinue(self):
+		""" Click through <return to continue> prompts until complete """
+		last_page = ""
+		while (True):
+			# Check for <return to continue> prompt - send returns until command finishes
+			i = self.process.expect([GDB_PROMPT, RETURN_TO_CONTINUE])
+			if i == 1:
+				# Save last lines in case pop and retq instructions straddle prompt
+				last_page = self.process.before.strip()
+				self.process.sendline(CARRIAGE_RETURN)
+			else:
+				break
+		return last_page + "\n" + self.process.before.strip()
+
 	def setArchitecture(self):
 		""" Set machine architecture for source file - only supports 32- and 64- bit x86 """
 		self.process.sendline(INFO_TARGET)
@@ -161,35 +211,7 @@ class GDBProcess:
 
 		if bits:
 			# Save as 32- or 64-bit for accessing registers
-			self.architecture = MachineArchitecture(int(bits))	
-
-	def setMainBreakpoint(self):
-		""" Set breakpoint at return in main and return breakpoint number """
-		self.process.sendline(DISAS_MAIN)
-
-		while (True):
-			# Check for <return to continue> prompt - send returns until command finishes
-			i = self.process.expect([GDB_PROMPT, RETURN_TO_CONTINUE])
-			if i == 1:
-				self.process.sendline("")
-			else:
-				break
-
-		# Get address of line right before main exit
-		main_addr = parseMainReturnAddress(self.process.before.strip())
-
-		# Set breakpoint right before main exit and save breakpoint number
-		self.process.sendline(BREAK_ADDR.format(main_addr))
-		self.process.expect(GDB_PROMPT)
-		self.mainBreakpoint = parseSetBreakpointNum(self.process.before.strip())
-
-	def returningFromMain(self, frame):
-		""" Check if function about to exit from main """
-		return frame == self.empty_frame
-
-	def hitFinalBreakpoint(self, num):
-		""" Check if hit final main breakpoint """
-		return self.mainBreakpoint == num
+			self.architecture = MachineArchitecture(int(bits))
 
 	def setSymbolInfo(self, var, frame_item, frame_ptr):
 		""" Set title, length, and address for symbol """
@@ -308,9 +330,9 @@ class GDBProcess:
 		
 		# Increment end address by one so inclusive
 		# Will otherwise be blank if returning from function with no immediate assignment
-		self.process.sendline(DISAS.format(assembly_start, hex(int(assembly_end, 16)+1)))
-		self.process.expect(GDB_PROMPT)
-		assembly = parseAssembly(self.process.before.strip())
+		self.process.sendline(DISAS_LINE.format(assembly_start, hex(int(assembly_end, 16)+1)))
+		assembly = parseAssembly(self.returnToContinue())
+		
 		return [line, assembly]
 
 	def getArgs(self):

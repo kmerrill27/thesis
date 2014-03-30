@@ -33,8 +33,9 @@ class StackAndFrameWidget(QtGui.QFrame):
 		return self.stack_widget.peekFrame()
 
 	def updateTopFrame(self, frame):
-		""" Update top stack frame """
+		""" Update top stack frame and source display """
 		self.frame_widget.displayFrame(frame)
+		self.source_and_assembly_widget.setLine(frame.line, frame.assembly)
 
 	def returned(self, retval):
 		""" Display retval and pop frame on return from a function call """

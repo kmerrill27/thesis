@@ -63,24 +63,23 @@ class StackExplorerWidget(QtGui.QWidget):
 
 			if self.gdb_process.process:
 				# Program has already started
-				[returned, retval] = self.gdb_process.gdbLineStep()
+				[new_frame, retval, exiting_main] = self.gdb_process.gdbLineStep(self.stack_and_frame_widget.peekFrame())
 
-				if returned:
-					# Returned from function
-					self.stack_and_frame_widget.returned(retval)
-				else:
+				if new_frame:
 					if retval:
-						if self.gdb_process.hitFinalBreakpoint(retval):
-							# Hit final breakpoint in main
-							self.finish()
-						else:
-							# Stepped into different function
-							new_frame = self.gdb_process.functionSetup()
-							self.stack_and_frame_widget.pushFrame(new_frame)
+						# Stepped into function
+						self.stack_and_frame_widget.pushFrame(new_frame)
 					else:
 						# Inside same function
-						frame = self.gdb_process.gdbUpdateTopFrame(self.stack_and_frame_widget.getTopFrame())
-						self.stack_and_frame_widget.updateTopFrame(frame)
+						self.stack_and_frame_widget.updateTopFrame(new_frame)
+				else:
+					# Returned from function
+					if exiting_main:
+						# No more function calls - hit return breakpoint in main
+						self.finish()
+					else:
+						# Returned from non-main function
+						self.stack_and_frame_widget.returned(retval)
 
 			elif self.reset:
 				# Start program
@@ -95,9 +94,9 @@ class StackExplorerWidget(QtGui.QWidget):
 
 			QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
-			[new_frame, retval] = self.setUpNextFrame()
+			[new_frame, retval, exiting_main] = self.setUpNextFrame()
 
-			if self.gdb_process.returningFromMain(new_frame):
+			if exiting_main:
 				# No more function calls - hit return breakpoint in main
 				self.finish()
 			elif new_frame:
@@ -141,15 +140,15 @@ class StackExplorerWidget(QtGui.QWidget):
 		""" Make next function call and populate new stack frame """
 		if self.gdb_process.process:
 			# Program has already started
-			[new_frame, retval] = self.gdb_process.gdbFunctionStep()
-			if new_frame and not self.gdb_process.returningFromMain(new_frame):
+			[new_frame, retval, exiting_main] = self.gdb_process.gdbFunctionStep()
+			if new_frame:
 				# "Run" previous frame on stack to function call
 				self.gdb_process.gdbUpdatePreviousFrame(self.stack_and_frame_widget.peekFrame())
 		elif self.reset:
 			# Start program
-			return [self.gdb_process.gdbInit(), None]
+			return [self.gdb_process.gdbInit(), None, False]
 
-		return [new_frame, retval]
+		return [new_frame, retval, exiting_main]
 
 	def finish(self):
 		""" Finish current program execution and exit """
