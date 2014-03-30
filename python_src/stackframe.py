@@ -35,12 +35,11 @@ class FrameItem:
 class FrameDisplay(QtGui.QTableWidget):
 	""" Widget for displaying current stack frame """
 
-	def __init__(self, frame, addr_box, inspect_on, decimal_on, reverse):
+	def __init__(self, frame, addr_box, mode, reverse):
 		super(FrameDisplay, self).__init__()
 		self.frame = frame
 		self.addr_box = addr_box
-		self.inspect_on = inspect_on
-		self.decimal_on = decimal_on
+		self.mode = mode
 		self.reverse = reverse
 		self.initUI()
 
@@ -132,12 +131,10 @@ class FrameDisplay(QtGui.QTableWidget):
 			else:
 				self.frame.selected_row = selections[0].row()
 
-			if self.inspect_on:
-				self.setInspectBox()
-			else:
-				self.setAddressBox()
+			self.setBox()
 
 	def populateItem(self, frame_item):
+		""" Set up name and value display for item """
 		item_title = QtGui.QLabel()
 
 		if not frame_item.initialized:
@@ -152,6 +149,7 @@ class FrameDisplay(QtGui.QTableWidget):
 		return item_title
 
 	def displayPointers(self, addr, header):
+		""" Display frame and base pointer markers at their respective addresses """
 		if self.frame.frame_ptr == addr and self.frame.stack_ptr == addr:
 			# Frame pointer and stack pointer at address
 			header.setText(self.frame.architecture.base_pointer + "/" + self.frame.architecture.stack_pointer)
@@ -163,6 +161,7 @@ class FrameDisplay(QtGui.QTableWidget):
 			header.setText(self.frame.architecture.stack_pointer)		
 
 	def setUpSpan(self, row_span, item_title):
+		""" Set up item to span number of rows proptional to its length """
 		new_row = self.rowCount() - row_span
 		self.setCellWidget(new_row, 0, item_title)
 
@@ -191,23 +190,9 @@ class FrameDisplay(QtGui.QTableWidget):
 			if self.frame.stack_ptr == curr_addr:
 				header.setText(self.frame.architecture.stack_pointer)
 
-	def setAddressBox(self):
-		""" Set message in box to item address """
-		addr = self.verticalHeaderItem(self.frame.selected_row).toolTip()
-		if self.decimal_on:
-			# Display address as decimal
-			if self.reverse:
-				addr = DOWN_CARET + str(int(str(addr.replace(DOWN_CARET, "")), 16))
-			else:
-				addr = CARET + str(int(str(addr.replace(CARET, "")), 16))
-			self.addr_box.setText(addr)
-		else:
-			# Display address as hex
-			self.addr_box.setText(addr)
-	
-	def setInspectBox(self):
-		""" Set message in box to item zoom value """
-		if self.inspect_on:
+	def setBox(self):
+		""" Set address box to item element according to current mode """
+		if self.mode == ZOOM_MODE:
 			for i in range(0, self.rowSpan(self.frame.selected_row, 0)):
 				# Find row with widget in span
 				item = self.cellWidget(self.frame.selected_row - i, 0)
@@ -220,15 +205,15 @@ class FrameDisplay(QtGui.QTableWidget):
 			# No item at address
 			self.addr_box.clear()
 		else:
-			# If inspect off, display address
-			self.setAddressBox()
+			addr = self.verticalHeaderItem(self.frame.selected_row).toolTip()
+			if self.mode == DECIMAL_MODE:
+				if self.reverse:
+					addr = DOWN_CARET + str(int(str(addr.replace(DOWN_CARET, "")), 16))
+				else:
+					addr = CARET + str(int(str(addr.replace(CARET, "")), 16))
+			self.addr_box.setText(addr)
 
-	def toggleDecimal(self, decimal_on):
-		""" Toggle decimal mode, which displays address as hex or dec """
-		self.decimal_on = decimal_on
-		self.setAddressBox()
-
-	def toggleInspect(self, inspect_on):
-		""" Toggle inspect mode, which displays struct zoom values """
-		self.inspect_on = inspect_on
-		self.setInspectBox()
+	def setMode(self, mode):
+		""" Set display mode to hexadecimal, decimal, or zoom value """
+		self.mode = mode
+		self.setBox()

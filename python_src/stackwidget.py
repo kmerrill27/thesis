@@ -16,7 +16,8 @@ class StackTopBar(QtGui.QWidget):
 		self.reverse_button = QtGui.QPushButton()
 		self.reverse_button.setCheckable(True)
 		self.reverse_button.setIcon(QtGui.QIcon(UP_ICON))
-		self.reverse_button.setMaximumWidth(100)
+		self.reverse_button.setToolTip(REVERSE_BUTTON_LABEL)
+		self.reverse_button.setMaximumWidth(BUTTON_WIDTH)
 		self.reverse_button.toggled.connect(self.stackFlipped)
 
 		box = QtGui.QHBoxLayout()
@@ -25,6 +26,7 @@ class StackTopBar(QtGui.QWidget):
 		self.setLayout(box)
 
 	def stackFlipped(self, checked):
+		""" Reverse stack to grow up or down """
 		if checked:
 			self.reverse_button.setIcon(QtGui.QIcon(DOWN_ICON))
 		else:

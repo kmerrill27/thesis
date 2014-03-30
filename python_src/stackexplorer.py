@@ -20,12 +20,6 @@ class StackExplorerWidget(QtGui.QWidget):
 		self.toolbar = QtGui.QToolBar()
 		self.setupToolbar()
 
-		# Set up mode actions
-		self.inspect_action = self.setupAction("Inspect", INSPECT_ICON, "Ctrl+Up", self.toggleInspect, True)
-		self.inspect_cursor = self.getCursor(INSPECT_ICON)
-		self.decimal_action = self.setupAction("Decimal", DECIMAL_ICON, "Ctrl+1", self.toggleDecimal, True)
-		self.decimal_cursor = self.getCursor(DECIMAL_ICON)
-
 		splitterWrapHoriz(grid, [self.stack_and_frame_widget, self.source_and_assembly_widget])
 		grid.addWidget(self.toolbar)
 		self.setLayout(grid)
@@ -33,18 +27,16 @@ class StackExplorerWidget(QtGui.QWidget):
 	def setupToolbar(self):
 		""" Add user execution control actions to main app toolbar """
 		self.addSpacer()
-		# On Mac OS X, Ctrl corresponds to Command key
-		self.setupAction("Line step", LINE_ICON, "Right", self.lineStep, False)
-		self.setupAction("Function step", FUNCTION_ICON, "Ctrl+Right", self.functionStep, False)
-		self.setupAction("Run", RUN_ICON, "Space", self.run, False)
-		self.setupAction("Reset", RESET_ICON, "Ctrl+Left", self.reset, False)
+		self.setupAction(LINE_STEP_LABEL, LINE_ICON, LINE_STEP_SHORTCUT, self.lineStep)
+		self.setupAction(FUNCTION_STEP_LABEL, FUNCTION_ICON, FUNCTION_STEP_SHORTCUT, self.functionStep)
+		self.setupAction(RUN_LABEL, RUN_ICON, RUN_SHORTCUT, self.run)
+		self.setupAction(RESET_LABEL, RESET_ICON, RESET_SHORTCUT, self.reset)
 
-	def setupAction(self, name, icon, shortcut, handler, checkable):
+	def setupAction(self, name, icon, shortcut, handler):
 		""" Add user action to main app toolbar """
 		action = QtGui.QAction(QtGui.QIcon(icon), name, self)
 		action.setShortcut(QtGui.QKeySequence(shortcut))
 		action.setStatusTip(name)
-		action.setCheckable(checkable)
 		action.triggered.connect(handler)
 
 		label = QtGui.QLabel()
@@ -168,44 +160,3 @@ class StackExplorerWidget(QtGui.QWidget):
 		exit_status = self.gdb_process.gdbFinishUp()
 		# Display exit status
 		self.stack_and_frame_widget.finish(exit_status, frame)
-
-	def toggleDecimal(self, checked):
-		""" Toggle decimal mode, which displays address as hex or dec """
-		if not checked:
-			# Deselect decimal
-			QtGui.QApplication.restoreOverrideCursor()
-			self.stack_and_frame_widget.toggleDecimal(False)
-		else:
-			if self.inspect_action.isChecked():
-				# Deselect inspect - only one of decimal and inspect allowed at a time
-				QtGui.QApplication.restoreOverrideCursor()
-				self.inspect_action.setChecked(False)
-				self.stack_and_frame_widget.toggleInspect(False)
-
-			# Select decimal
-			QtGui.QApplication.setOverrideCursor(self.decimal_cursor)
-			self.stack_and_frame_widget.toggleDecimal(True)
-
-	def toggleInspect(self, checked):
-		""" Toggle inspect mode, which displays struct zoom values """
-		if not checked:
-			# Deselect inspect
-			QtGui.QApplication.restoreOverrideCursor()
-			self.stack_and_frame_widget.toggleInspect(False)
-		else:
-			if self.decimal_action.isChecked():
-				# Deselect decimal - only one of inspect and decimal allowed at a time
-				QtGui.QApplication.restoreOverrideCursor()
-				self.decimal_action.setChecked(False)
-				self.stack_and_frame_widget.toggleDecimal(False)
-
-			# Select inspect
-			QtGui.QApplication.setOverrideCursor(self.inspect_cursor)
-			self.stack_and_frame_widget.toggleInspect(True)
-
-	def getCursor(self, icon):
-		""" Create custom cursor from image file """
-		img = QtGui.QImage(icon)
-		pixmap = QtGui.QPixmap.fromImage(img)
-		pixmap = pixmap.scaled(CURSOR_SIZE, CURSOR_SIZE, QtCore.Qt.KeepAspectRatio)
-		return QtGui.QCursor(pixmap, -1, -1)

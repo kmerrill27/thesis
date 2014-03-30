@@ -8,8 +8,6 @@ class FrameWidget(QtGui.QFrame):
 		self.initUI()
 
 	def initUI(self):
-		self.top_bar = FrameTopBar()
-
 		self.retval_box = QtGui.QLineEdit()
 		self.retval_box.setReadOnly(True)
 
@@ -17,6 +15,9 @@ class FrameWidget(QtGui.QFrame):
 		self.addr_box.setReadOnly(True)
 
 		self.window = FrameWindow(self.addr_box)
+
+		self.top_bar = FrameTopBar(self.window)
+
 		frameWrapVert(self, [self.top_bar, self.retval_box, self.addr_box, self.window])
 
 	def flip(self, checked):
@@ -48,29 +49,49 @@ class FrameWidget(QtGui.QFrame):
 		self.retval_box.clear()
 		self.addr_box.clear()
 
-	def toggleDecimal(self, decimal_on):
-		""" Toggle decimal mode, which displays address as hex or dec """
-		self.window.toggleDecimal(decimal_on)
-
-	def toggleInspect(self, inspect_on):
-		""" Toggle inspect mode, which displays struct zoom values """
-		self.window.toggleInspect(inspect_on)
-
 class FrameTopBar(QtGui.QWidget):
 	""" Menu bar for frame widget label """
 
-	def __init__(self):
+	def __init__(self, frame_window):
 		super(FrameTopBar, self).__init__()
+		self.frame_window = frame_window
 		self.initUI()
 
 	def initUI(self):
+		self.button_group = QtGui.QButtonGroup()
+		self.button_group.buttonClicked.connect(self.modeSwitched)
+
 		label = QtGui.QLabel()
 		label.setText(FRAME_WIDGET_TITLE)
 
 		box = QtGui.QHBoxLayout()
 		box.addWidget(label)
+		box.addSpacing(10)
+		box.setSpacing(5)
+
+		# Buttons for controlling display mode for frame items
+		self.addButton(HEX_ICON, HEX_MODE, box).setChecked(True)
+		self.addButton(DECIMAL_ICON, DECIMAL_MODE, box)
+		self.addButton(ZOOM_ICON, ZOOM_MODE, box)
 
 		self.setLayout(box)
+
+	def addButton(self, icon, mode, box):
+		""" Set up mode buttons """
+		button = QtGui.QPushButton()
+		button.setCheckable(True)
+		button.setIcon(QtGui.QIcon(icon))
+		button.setToolTip(mode)
+		button.setMaximumWidth(BUTTON_WIDTH)
+
+		self.button_group.addButton(button)
+		box.addWidget(button)
+
+		return button
+
+	def modeSwitched(self):
+		""" Change mode between hexadecimal, decimal, and zoom value """
+		self.frame_window.setMode(self.button_group.checkedButton().toolTip())
 
 class FrameWindow(QtGui.QWidget):
 	""" Window for displaying selected stack frame info """
@@ -82,8 +103,7 @@ class FrameWindow(QtGui.QWidget):
 		self.current_frame = None
 		self.frame_display = None
 		self.base_label = None
-		self.inspect_on = False
-		self.decimal_on = False
+		self.mode = None
 		self.reverse = False
 
 	def initUI(self):
@@ -93,6 +113,7 @@ class FrameWindow(QtGui.QWidget):
 		self.setLayout(self.frame)
 
 	def flip(self, checked):
+		""" Reverse stack to grow up or down """
 		self.reverse = checked
 		if self.reverse:
 			self.frame.setDirection(QtGui.QBoxLayout.BottomToTop)
@@ -111,7 +132,7 @@ class FrameWindow(QtGui.QWidget):
 			self.clear()
 
 		self.current_frame = frame
-		self.frame_display = FrameDisplay(frame, self.addr_box, self.inspect_on, self.decimal_on, self.reverse)
+		self.frame_display = FrameDisplay(frame, self.addr_box, self.mode, self.reverse)
 		self.frame.addWidget(self.frame_display, 1)
 
 		if frame.bottom:
@@ -138,14 +159,7 @@ class FrameWindow(QtGui.QWidget):
 			self.frame.removeWidget(item)
 			item.deleteLater()
 
-	def toggleDecimal(self, decimal_on):
-		""" Toggle decimal mode, which displays address as hex or dec """
+	def setMode(self, mode):
 		if self.frame_display:
-			self.frame_display.toggleDecimal(decimal_on)
-		self.decimal_on = decimal_on
-
-	def toggleInspect(self, inspect_on):
-		""" Toggle inspect mode, which displays struct zoom values """
-		if self.frame_display:
-			self.frame_display.toggleInspect(inspect_on)
-		self.inspect_on = inspect_on
+			self.frame_display.setMode(mode)
+		self.mode = mode

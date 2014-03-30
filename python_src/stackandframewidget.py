@@ -49,11 +49,3 @@ class StackAndFrameWidget(QtGui.QFrame):
 		""" Clear stack and frame display """
 		self.stack_widget.clear()
 		self.frame_widget.clear()
-
-	def toggleDecimal(self, decimal_on):
-		""" Toggle decimal mode, which displays address as hex or dec """
-		self.frame_widget.toggleDecimal(decimal_on)
-
-	def toggleInspect(self, inspect_on):
-		""" Toggle inspect mode, which displays struct zoom values """
-		self.frame_widget.toggleInspect(inspect_on)
