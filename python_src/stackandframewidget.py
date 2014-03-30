@@ -13,8 +13,8 @@ class StackAndFrameWidget(QtGui.QFrame):
 	def initUI(self):
 		self.frame_widget = FrameWidget()
 
-		self.top_bar = StackTopBar()
 		self.stack_widget = StackWindow(self.frame_widget, self.source_and_assembly_widget)
+		self.top_bar = StackTopBar(self.stack_widget)
 		self.stack_widget_frame = QtGui.QFrame()
 
 		frameWrapVert(self.stack_widget_frame, [self.top_bar, self.stack_widget])

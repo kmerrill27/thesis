@@ -203,7 +203,7 @@ class GDBProcess:
 		self.process.expect(GDB_PROMPT)
 		offset = parseAddress(self.process.before.strip())
 		# Address is base pointer plus offset
-		frame_item.addr = hex(int(frame_ptr, 16) + int(offset, 16))
+		frame_item.addr = hex(int(frame_ptr, 16) + int(offset))
 
 	def setSymbolValue(self, var, frame_item):
 		""" Set value and zoom value of symbol """

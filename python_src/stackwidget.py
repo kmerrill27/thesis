@@ -1,19 +1,35 @@
+from defs import *
 from widgetwrapper import *
 
 class StackTopBar(QtGui.QWidget):
 	""" Menu bar for stack widget label """
 
-	def __init__(self):
+	def __init__(self, stack_window):
 		super(StackTopBar, self).__init__()
+		self.stack_window = stack_window
 		self.initUI()
 
 	def initUI(self):
 		label = QtGui.QLabel()
-		label.setText("Call Stack")
+		label.setText(STACK_WIDGET_TITLE)
+
+		self.reverse_button = QtGui.QPushButton()
+		self.reverse_button.setCheckable(True)
+		self.reverse_button.setIcon(QtGui.QIcon(UP_ICON))
+		self.reverse_button.setMaximumWidth(100)
+		self.reverse_button.toggled.connect(self.stackFlipped)
 
 		box = QtGui.QHBoxLayout()
 		box.addWidget(label)
+		box.addWidget(self.reverse_button)
 		self.setLayout(box)
+
+	def stackFlipped(self, checked):
+		if checked:
+			self.reverse_button.setIcon(QtGui.QIcon(DOWN_ICON))
+		else:
+			self.reverse_button.setIcon(QtGui.QIcon(UP_ICON))
+		self.stack_window.flip(checked)
 
 class StackWindow(QtGui.QWidget):
 	""" Window for displaying call stack """
@@ -23,10 +39,12 @@ class StackWindow(QtGui.QWidget):
 		self.frame_widget = frame_widget
 		self.source_and_assembly_widget = source_and_assembly_widget
 		self.stack = []
+		self.reverse = False # True is stack growing down
 		self.initUI()
 
 	def initUI(self):
 		self.stack_box = QtGui.QVBoxLayout()
+		self.stack_box.setDirection(QtGui.QBoxLayout.TopToBottom)
 		self.stack_box.addStretch() # This adds 1 to the count of stack_box
 		self.stack_box.setSpacing(2)
 		self.setLayout(self.stack_box)
@@ -34,7 +52,17 @@ class StackWindow(QtGui.QWidget):
 		self.button_group = QtGui.QButtonGroup()
 		self.button_group.buttonClicked.connect(self.frameSelected)
 
+	def flip(self, checked):
+		""" Reverse stack to grow up or down """
+		self.reverse = checked
+		if self.reverse:
+			self.stack_box.setDirection(QtGui.QBoxLayout.BottomToTop)
+		else:
+			self.stack_box.setDirection(QtGui.QBoxLayout.TopToBottom)
+		self.frame_widget.flip(checked)
+
 	def frameSelected(self):
+		""" Update frame display to match new frame selection """
 		frame_index = self.stack_box.indexOf(self.button_group.checkedButton())
 		frame_index = len(self.stack) - frame_index - 1
 		self.frame_widget.displayFrame(self.stack[frame_index])
@@ -60,14 +88,16 @@ class StackWindow(QtGui.QWidget):
 	def popFrame(self):
 		""" Remove top frame on stack """
 		# Number of frames should be the same as the number of buttons in stack display
-		assert len(self.stack) == self.stack_box.count()-1
+		start_length = len(self.stack)
+		assert start_length == self.stack_box.count()-1
 
-		if len(self.stack) > 1:
-			self.removeButton(self.stack_box.itemAt(0).widget())
+		if start_length > 1:
 			self.stack.pop()
 
-			# Select new top frame
+			self.removeButton(self.stack_box.itemAt(0).widget())
 			self.stack_box.itemAt(0).widget().setChecked(True)
+
+			# Select new top frame
 			self.frameSelected()
 			return True
 

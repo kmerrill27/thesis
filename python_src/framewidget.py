@@ -19,6 +19,9 @@ class FrameWidget(QtGui.QFrame):
 		self.window = FrameWindow(self.addr_box)
 		frameWrapVert(self, [self.top_bar, self.retval_box, self.addr_box, self.window])
 
+	def flip(self, checked):
+		self.window.flip(checked)
+
 	def displayFrame(self, frame):
 		""" Display stack frame in window """
 		self.window.displayFrame(frame)
@@ -49,9 +52,9 @@ class FrameWidget(QtGui.QFrame):
 		""" Toggle decimal mode, which displays address as hex or dec """
 		self.window.toggleDecimal(decimal_on)
 
-	def toggleInspect(self, inspectOn):
+	def toggleInspect(self, inspect_on):
 		""" Toggle inspect mode, which displays struct zoom values """
-		self.window.toggleInspect(inspectOn)
+		self.window.toggleInspect(inspect_on)
 
 class FrameTopBar(QtGui.QWidget):
 	""" Menu bar for frame widget label """
@@ -76,15 +79,28 @@ class FrameWindow(QtGui.QWidget):
 		super(FrameWindow, self).__init__()
 		self.initUI()
 		self.addr_box = addr_box
+		self.current_frame = None
 		self.frame_display = None
 		self.base_label = None
 		self.inspect_on = False
 		self.decimal_on = False
+		self.reverse = False
 
 	def initUI(self):
 		self.frame = QtGui.QVBoxLayout()
 		self.frame.addStretch()
+		self.frame.setDirection(QtGui.QBoxLayout.TopToBottom)
 		self.setLayout(self.frame)
+
+	def flip(self, checked):
+		self.reverse = checked
+		if self.reverse:
+			self.frame.setDirection(QtGui.QBoxLayout.BottomToTop)
+		else:
+			self.frame.setDirection(QtGui.QBoxLayout.TopToBottom)
+		
+		if self.current_frame:
+			self.displayFrame(self.current_frame)
 
 	def displayFrame(self, frame):
 		""" Display frame items """
@@ -92,13 +108,15 @@ class FrameWindow(QtGui.QWidget):
 			# Clear current display
 			self.clear()
 
-		self.frame_display = FrameDisplay(frame, self.addr_box, self.inspect_on, self.decimal_on)
+		self.current_frame = frame
+		self.frame_display = FrameDisplay(frame, self.addr_box, self.inspect_on, self.decimal_on, self.reverse)
 		self.frame.addWidget(self.frame_display, 1)
 
 		if frame.bottom:
 			# Not in main - main has not base address label
 			self.base_label = QtGui.QLabel()
 			self.base_label.setText(FRAME_BOTTOM + frame.bottom)
+
 			self.frame.addWidget(self.base_label)
 
 	def clear(self):
@@ -107,6 +125,7 @@ class FrameWindow(QtGui.QWidget):
 		self.removeItem(self.base_label)
 		self.addr_box.clear()
 
+		self.current_frame = None
 		self.frame_display = None
 		self.base_label = None
 

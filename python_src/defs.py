@@ -14,6 +14,7 @@ APP_TITLE = "StackExplorer"
 ASSEMBLY_WIDGET_TITLE = "Assembly Code"
 FRAME_WIDGET_TITLE = "Stack Frame"
 SOURCE_WIDGET_TITLE = "Source Code"
+STACK_WIDGET_TITLE = "Call Stack"
 
 BASE_POINTERS = ["ebp", "rbp"]
 STACK_POINTERS = ["esp", "rsp"]
@@ -22,7 +23,9 @@ INSTR_POINTERS = ["eip", "rip"]
 CALLER_SAVED = "Caller"
 RETURN_ADDRESS = "Return address"
 FRAME_BOTTOM = "Frame bottom: "
-CARAT = "^ "
+HEADER_BLANK = "					"
+CARET = "^ "
+DOWN_CARET = "v "
 MAIN = "main"
 
 RETURNED_VOID = "Function returned void."
@@ -41,6 +44,8 @@ RUN_ICON = "./../static/run.png"
 RESET_ICON = "./../static/reset.png"
 INSPECT_ICON = "./../static/inspect.png"
 DECIMAL_ICON = "./../static/convert.png"
+UP_ICON = "./../static/up.png"
+DOWN_ICON = "./../static/down.png"
 
 NULL_VAL = 0
 UNINITIALIZED = "null"
