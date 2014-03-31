@@ -80,6 +80,7 @@ class StackExplorerWidget(QtGui.QWidget):
 					else:
 						# Returned from non-main function
 						self.stack_and_frame_widget.returned(retval)
+						self.gdb_process.setCurrentFunction(self.stack_and_frame_widget.peekFrame().title)
 
 			elif self.reset:
 				# Start program
@@ -105,6 +106,7 @@ class StackExplorerWidget(QtGui.QWidget):
 			else:
 				# Returned from function
 				self.stack_and_frame_widget.returned(retval)
+				self.gdb_process.setCurrentFunction(self.stack_and_frame_widget.peekFrame().title)
 
 		QtGui.QApplication.restoreOverrideCursor()
 

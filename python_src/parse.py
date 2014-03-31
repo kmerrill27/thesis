@@ -48,6 +48,10 @@ def parseAssembly(lines):
 
 	return assembly
 
+def parseAssemblyAddress(lines):
+	""" Get address of assembly instruction """
+	return regexSearch(ASSEMBLY_ADDR_REGEX, lines)
+
 def parseVarList(lines):
 	""" Get names of variables from 'info args' or 'info locals' call """
 	return regexFindAll(VAR_NAME_REGEX, lines)

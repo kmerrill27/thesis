@@ -15,10 +15,12 @@ CONTINUE = "continue"
 LINE_STEP = "step"
 FUNCTION_STEP = "finish"
 
-BREAK_ADDR = "break *{0}"
+BREAK_AT_ADDRESS = "break *{0}"
 ENABLE_BREAKPOINT = "enable {0}"
 DISABLE_ALL_BREAKPOINTS = "disable"
+CURRENT_INSTRUCTION = "x/i $pc"
 INSTR_AT_ADDR = "x/i {0}"
+LINE_AT_ADDR = "info line *{0}"
 CARRIAGE_RETURN = ""
 
 INFO_TARGET = "info target"

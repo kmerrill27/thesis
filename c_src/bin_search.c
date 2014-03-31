@@ -13,7 +13,7 @@ int bin_search(int list[], int lo, int hi, int key);
  	int n = 4;
  	int list[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
  	int result = bin_search(list, 0, sizeof(list) / sizeof(list[0]) - 1, n);
- 	printf("element %d %s\n", n, result == 1 ? "found" : "not found");
+ 	printf("element %d %s\n", n, result > -1 ? "found" : "not found");
 
  	return 0;
  }

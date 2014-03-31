@@ -60,8 +60,8 @@ class FrameDisplay(QtGui.QTableWidget):
 		# Sort items in increasing address order
 		sorted_list = sorted(self.frame.items, key=lambda x: x.addr)
 
-		if self.frame.stack_ptr != None:
-			# Not in main - add empty space between top item and stack pointer
+		if self.frame.stack_ptr:
+			# Add empty space between top item and stack pointer (if not in main)
 			self.addTempStorageSpace(int(sorted_list[0].addr, 16), int(self.frame.stack_ptr, 16))
 
 		for item in sorted_list:
@@ -88,8 +88,8 @@ class FrameDisplay(QtGui.QTableWidget):
 
 			last_addr = self.displayItem(item)
 
-		if self.frame.stack_ptr != None:
-			# Not in main - add empty space between top item and stack pointer
+		if self.frame.stack_ptr:
+			# Add empty space between top item and stack pointer (if not in main)
 			self.addTempStorageSpace(int(sorted_list[-1].addr, 16), int(self.frame.stack_ptr, 16))
 
 		self.selectRow(self.frame.selected_row)
