@@ -102,7 +102,7 @@ class GDBProcess:
 	def gdbUpdateTopFrame(self, frame):
 		""" Update uppermost frame on stack """
 		[frame.line, frame.assembly] = self.getLineAndAssembly()
-		
+
 		# Don't add stack pointer to main frame
 		if frame.stack_ptr:
 			frame.stack_ptr = self.getRegisterValue(self.architecture.stack_pointer)

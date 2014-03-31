@@ -136,7 +136,7 @@ class FrameWindow(QtGui.QWidget):
 		self.frame.addWidget(self.frame_display, 1)
 
 		if frame.bottom:
-			# Not in main - main has not base address label
+			# Not in main - main has no base address label
 			self.base_label = QtGui.QLabel()
 			self.base_label.setText(FRAME_BOTTOM + frame.bottom)
 
