@@ -93,7 +93,7 @@ class SourceWindow(QtGui.QListWidget):
 
 	def __init__(self):
 		super(SourceWindow, self).__init__()
-		self.isSource = False
+		self.is_source = False
 
 	def loadSource(self, filename):
 		""" Load and display lines of source file """
@@ -105,12 +105,12 @@ class SourceWindow(QtGui.QListWidget):
 				source_lines = [line.rstrip('\n') for line in f]
 			self.addItems(source_lines)
 			self.unhighlightLines()
-			self.isSource = True
+			self.is_source = True
 			return 1
 		else:
 			# File not a C source file - display error message
 			self.addItem(NOT_C_SOURCE)
-			self.isSource = False
+			self.is_source = False
 			return -1
 
 	def highlightLine(self, line_num):

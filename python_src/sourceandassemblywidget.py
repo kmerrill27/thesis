@@ -33,4 +33,4 @@ class SourceAndAssemblyWidget(QtGui.QFrame):
 
 	def isSource(self):
 		""" Return true if valid source file is loaded """
-		return self.source_widget.window.isSource
+		return self.source_widget.window.is_source

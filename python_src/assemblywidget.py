@@ -46,6 +46,8 @@ class AssemblyWindow(QtGui.QListWidget):
 		""" Display assembly instructions """
 		self.clear()
 		self.addItems(lines)
+		# Highlight top row, which is current instruction
+		self.setCurrentRow(0)
 
 	def keyPressEvent(self, event):
 		""" Override to disallow user from selecting line """
